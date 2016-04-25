@@ -5,7 +5,7 @@ import be.kuleuven.cs.som.annotate.*;
 /**
  * A class of bank accounts involving a bank code, a number, a credit limit, a balance limit, a balance and a blocking facility.
  * 
- * @author 	Kevin Algoet
+ * @author 	Kevin Algoet & Eric Steegmans
  * @version	1.0
  * @note	Based on the code found in the book Object Oriented Programming with Java by Eric Steegmans.
  *
@@ -38,7 +38,11 @@ public class BankAccount {
 	 */
 	public BankAccount(int number, long balance, boolean isBlocked)
 	{
+		if (number < 0)
+			number = 0;
 		this.number = number;
+		setBalance(balance);
+		setBlocked(isBlocked);
 	}
 	
 	/**
@@ -142,7 +146,7 @@ public class BankAccount {
 	 */
 	public boolean hasHigherBalanceThan(BankAccount other)
 	{
-		return getBalance() > other.getBalance();
+		return (other != null) && (getBalance() > other.getBalance());
 	}
 	
 	/**
@@ -158,7 +162,8 @@ public class BankAccount {
 	 */
 	public void deposit(long amount)
 	{
-		
+		if ((amount > 0) && (getBalance() + amount <= getBalanceLimit()))
+			setBalance(getBalance() + amount);
 	}
 	
 	/**
@@ -174,7 +179,8 @@ public class BankAccount {
 	 */
 	public void withdraw(long amount)
 	{
-		
+		if ((amount > 0) && !isBlocked() && (getBalance() - amount >= getCreditLimit()))
+			setBalance(getBalance() - amount); 
 	}
 	
 	/**
@@ -184,12 +190,12 @@ public class BankAccount {
 	 * 			The amount of money to be transferred.
 	 * @param 	destination
 	 * 			The Bank Account to transfer the money to.
-	 * @effect	If the given destination account is effective and not the same as this Bank Account, and if this 
-	 * 			Bank Account isn't blocked, and if the old balance of this Bank Account decremented with the given
+	 * @effect	If the given amount of money is positive, and if the given destination account is effective and not the same as this Bank Account, 
+	 * 			and if this Bank Account isn't blocked, and if the old balance of this Bank Account decremented with the given
 	 * 			amount of money isn't below the credit limit, and if the old balance of the given destination account incremented
 	 * 			with the given amount of money isn't above the balance limit, the given amount of money is withdrawn from this 
 	 * 			Bank Account, and deposited to the given destination account.
-	 * 			| if ((destination != null) && (destination != this) && ((old.getBalance() - amount) >= getCreditLimit())
+	 * 			| if ((amount > 0) && (destination != null) && (destination != this) && ((old.getBalance() - amount) >= getCreditLimit())
 	 * 			|			&& ((old.destination.getBalance() + amount) <= getBalanceLimit())
 	 * 			|	then this.withdraw(amount)
 	 * 			|		 destination.deposit(amount)
@@ -214,7 +220,12 @@ public class BankAccount {
 	 */
 	public void transferTo(long amount, BankAccount destination)
 	{
-		
+		if ((amount > 0) && (destination != null) && (destination != this) && (getBalance() - amount >= getCreditLimit()) && 
+				(destination.getBalance() + amount <= getBalanceLimit()))
+		{
+			withdraw(amount);
+			destination.deposit(amount);
+		}
 	}
 	
 	/**
@@ -227,9 +238,10 @@ public class BankAccount {
 	 * 			| if (balance >= getCreditLimit() && balance <= getBalanceLimit())
 	 * 			|	then new.getBalance() == balance
 	 */
-	private void setBalance(long balance)
+	public void setBalance(long balance)
 	{
-		
+		if (balance >= getCreditLimit() && balance <= getBalanceLimit())
+			this.balance = balance;
 	}
 	
 	/**
