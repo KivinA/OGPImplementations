@@ -1,4 +1,4 @@
-package chapter_1.bookimplementation;
+package chapter_1.book_implementation;
 
 import be.kuleuven.cs.som.annotate.*;
 

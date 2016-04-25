@@ -1,4 +1,4 @@
-package chapter_1.bookimplementation;
+package chapter_1.book_implementation;
 
 import static org.junit.Assert.*;
 import org.junit.*;
