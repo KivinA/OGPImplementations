@@ -1,7 +1,6 @@
 package chapter_2.book_implementation;
 
-import be.kuleuven.cs.som.annotate.Basic;
-import be.kuleuven.cs.som.annotate.Immutable;
+import be.kuleuven.cs.som.annotate.*;
 
 /**
  * A class of Bank Account involving a bank code, a number, a credit limit, a balance limit, a balance and a blocking facility.
@@ -33,25 +32,21 @@ public class BankAccount {
 	 * 			The balance for this new Bank Account.
 	 * @param 	isBlocked
 	 * 			The blocked state for this new Bank Account.
-	 * @post	If the given number is not negative, the initial number of this new Bank Account is equal to the given number. Otherwise, its initial
-	 * 			number is equal to zero.
-	 * 			| if (number >= 0)
-	 * 			|	then new.getNumber() == number
-	 * 			| else
-	 * 			|	new.getNumber() == 0
-	 * @post	If the given balance is not below the credit limit and not above the balance limit, the initial balance of this new Bank Account
-	 * 			is equal to the given balance. Otherwise, its initial balance is equal to 0.
-	 * 			| if (balance >= getCreditLimit() && balance <= getBalanceLimit())
-	 * 			|	then new.getBalance() == balance
-	 * 			| else
-	 * 			|	new.getBalance() == 0
-	 * @post	The initial blocked state of this new Bank Account is equal to the given flag.
+	 * @pre		This new Bank account can have the given number as its number.
+	 * 			| canHaveAsNumber(number)
+	 * @pre		The given initial balance must be a valid balance for any Bank Account.
+	 * 			| isValidBalance(balance)
+	 * @post	The new number of this new Bank Account is equal to the given number.
+	 * 			| new.getNumber() == number
+	 * @post	The new balance of this new Bank Account is equal to the given initial balance.
+	 * 			| new.getBalance() == balance
+	 * @post	The new blocked state of this new Bank Account is equal to the given flag.
 	 * 			| new.isBlocked() == isBlocked
 	 */
+	@Raw
 	public BankAccount(int number, long balance, boolean isBlocked)
 	{
-		if (number < 0)
-			number = 0;
+		assert canHaveAsNumber(number) : "Precondition: Bank Account can have its number as its number.";
 		this.number = number;
 		setBalance(balance);
 		setBlocked(isBlocked);
@@ -91,23 +86,25 @@ public class BankAccount {
 	 * 
 	 * @note	The number of a Bank Account serves to distinguish it from all other Bank Accounts.
 	 */
-	@Basic @Immutable
+	@Basic @Immutable @Raw
 	public int getNumber()
 	{
 		return this.number;
 	}
 	
 	/**
-	 * Check whether the given bank code is a valid bank code for all Bank Accounts.
+	 * Check whether this Bank Account can have the given number as its number.
 	 * 
-	 * @param 	bankCode
-	 * 			The bank code to check.
-	 * @return	True if and only if the given bank code is strict positive.
-	 * 			| result == (bankCode > 0)
+	 * @param 	number
+	 * 			The number to check.
+	 * @return	True if and only if the given number is strict positive, and if no other Bank Account has the given number
+	 * 			as its number.
+	 * 			| result == ( (number > 0) && (for each account in BankAccount: ( (account != this) || (account.getNumber() != number) ) ) )
 	 */
-	public static boolean isValidBankCode(int bankCode)
+	@Raw
+	public boolean canHaveAsNumber(int number)
 	{
-		return bankCode > 0;
+		return false;
 	}
 	
 	/**
@@ -127,6 +124,19 @@ public class BankAccount {
 	}
 	
 	/**
+	 * Check whether the given bank code is a valid bank code for all Bank Accounts.
+	 * 
+	 * @param 	bankCode
+	 * 			The bank code to check.
+	 * @return	True if and only if the given bank code is strict positive.
+	 * 			| result == (bankCode > 0)
+	 */
+	public static boolean isValidBankCode(int bankCode)
+	{
+		return bankCode > 0;
+	}
+	
+	/**
 	 * Variable registering the bank code that applies to all Bank Accounts.
 	 */
 	private static final int bankCode = 123;
@@ -136,6 +146,7 @@ public class BankAccount {
 	 * 
 	 * @note	The balance of a Bank Account expresses the amount of money available on that account.
 	 */
+	@Basic @Raw
 	public long getBalance()
 	{
 		return this.balance;
@@ -147,7 +158,7 @@ public class BankAccount {
 	 * @param 	amount
 	 * 			The amount of money to compare with.
 	 * @return	True if and only if the balance of this Bank Account is greater than the given amount.
-	 * 			| result == getBalance() > amount
+	 * 			| result == (this.getBalance() > amount)
 	 */
 	public boolean hasHigherBalanceThan(long amount)
 	{
@@ -159,19 +170,29 @@ public class BankAccount {
 	 * 
 	 * @param 	other
 	 * 			The Bank Account to compare with.
-	 * @return	True if and only if the other Bank Account is effective, and if this Bank Account has a higher balance than 
-	 * 			the balance of the other Bank Account.
-	 * 			| result == ((other != null) && (getBalance() > other.getBalance()))
-	 * 
-	 * @note	You don't have to specify a second return clause for stating when the method will return false, but you can do this, 
-	 * 			as specified below.
-	 * @return	False if the other Bank Account is ineffective.
-	 * 			| if (other == null)
-	 * 			| 	then result == false
+	 * @pre		The other Bank Account is effective.
+	 * 			| other != null
+	 * @return	True if and only if this Bank Account has a higher balance than the balance of the other Bank Account.
+	 * 			| result == this.hasHigherBalanceThan(other.getBalance())
 	 */
 	public boolean hasHigherBalanceThan(BankAccount other)
 	{
-		return (other != null) && (getBalance() > other.getBalance());
+		assert (other != null) : "Precondition: Effective other account.";
+		return hasHigherBalanceThan(other.getBalance());
+	}
+	
+	/**
+	 * Return a boolean reflecting whether this Bank Account can accept the given amount for deposit.
+	 * 
+	 * @param 	amount
+	 * 			The amount to be checked.
+	 * @return	True if and only if the given amount if positive, if the balance of this Bank Account incremented with the given amount
+	 * 			is a valid balance for any Bank Account, and if that sum doesn't cause an overflow.
+	 * 			| result == ( (amount > 0) && isValidBalance(getBalance() + amount) && (getBalance() <= Long.MAX_VALUE - amount) )  
+	 */
+	public boolean canAcceptForDeposit(long amount)
+	{
+		return ((amount > 0) && isValidBalance(getBalance() + amount) && (getBalance() <= Long.MAX_VALUE - amount));
 	}
 	
 	/**
@@ -179,16 +200,38 @@ public class BankAccount {
 	 * 
 	 * @param	amount
 	 * 			The amount of money to be deposited.
-	 * @post	If the given amount of money is positive, and if the old balance of this Bank Account incremented with
-	 * 			the given ammount of money isn't above the balance limit, the new balance of this Bank Account is equal to the old balance of this
-	 * 			Bank Account incremented with the given amount of money.
-	 * 			| if (amount > 0 && (old.getBalance() + amount) < getBalanceLimit())
-	 * 			|	then new.getBalance() == old.getBalance() + amount
+	 * @pre		This Bank Account can accept the given amount for deposit.
+	 * 			| canAcceptForDeposit(amount)
+	 * @post	The new balance of this Bank Account is equal to the old balance of this Bank Account incremented with the given
+	 * 			amount of money.
+	 * 			| new.getBalance() == this.getBalance() + amount
+	 * 
+	 * @note	Even though we have specified a post condition, it would be better to specify an effect clause,
+	 * 			because we actually invoke another method to change the balance of this Bank Account. See below for effect clause:
+	 * @effect	The new balance of this Bank Account is set to the old balance of this Bank Account incremented with the given amount of money.
+	 * 			| this.setBalance(getBalance() + amount)
 	 */
 	public void deposit(long amount)
 	{
-		if ((amount > 0) && (getBalance() + amount <= getBalanceLimit()))
-			setBalance(getBalance() + amount);
+		assert canAcceptForDeposit(amount): "Precondition: Acceptable amount for deposit.";
+		setBalance(getBalance() + amount);
+	}
+	
+	/**
+	 * Return a boolean reflecting whether this Bank Account can accept the given amount for withdraw.
+	 * 
+	 * @param 	amount
+	 * 			The amount to be checked.
+	 * @return	True if and only if the given amount is positive, if this Bank Account isn't blocked, if the 
+	 * 			balance of this Bank Account decremented with the given amount is a valid balance for any Bank Account, and if
+	 * 			that substraction doesn't cause an overflow.
+	 * 			| result == ( (amount > 0) && !isBlocked() && isValidBalance(getBalance() - amount) &&
+	 * 			|		(getBalance() >= Long.MIN_VALUE + amount) )
+	 */
+	public boolean canAcceptForWithdraw(long amount)
+	{
+		return ((amount > 0) && !isBlocked() && isValidBalance(getBalance() - amount) && (getBalance() >= Long.MIN_VALUE + amount));
+		
 	}
 	
 	/**
@@ -196,16 +239,20 @@ public class BankAccount {
 	 * 
 	 * @param 	amount
 	 * 			The amount of money to be withdrawn
-	 * @post	If the given amount of money is positive, and if this Bank Account is not blocked, and if the old balance of this 
-	 * 			Bank Account decremented with the given amount of money is not below the credit limit, the new balance of this Bank Account
-	 * 			is equal to the old balance of this Bank Account decremented with the given amount of money.
-	 * 			| if (amount > 0 && !isBlocked() && (old.getBalance - amount) >= getCreditLimit())
-	 * 			|	then new.getBalance() == old.getBalance() - amount
+	 * @pre		This Bank Account can accept the given amount for withdraw.
+	 * 			| canAcceptForWithdraw(amount)
+	 * @post	The new balance of this Bank Account is equal to the old balance of this Bank Account decremented with the given amount of money.
+	 * 			| new.getBalance() == this.getBalance() - amount
+	 * 
+	 * @note	Even though we have specified a post condition, it would be better to specify an effect clause,
+	 * 			because we actually invoke another method to change the balance of this Bank Account. See below for effect clause:
+	 * @effect	The new balance of this Bank Account is set to the old balance of this Bank Account decremented with the given amount of money.
+	 * 			| this.setBalance(getBalance() - amount)
 	 */
 	public void withdraw(long amount)
 	{
-		if ((amount > 0) && !isBlocked() && (getBalance() - amount >= getCreditLimit()))
-			setBalance(getBalance() - amount); 
+		assert canAcceptForWithdraw(amount): "Precondition: Acceptable amount for withdraw.";
+		setBalance(getBalance() - amount); 
 	}
 	
 	/**
@@ -215,47 +262,30 @@ public class BankAccount {
 	 * 			The amount of money to be transferred.
 	 * @param 	destination
 	 * 			The Bank Account to transfer the money to.
-	 * @effect	If the given amount of money is positive, and if the given destination account is effective and not the same as this Bank Account, 
-	 * 			and if this Bank Account isn't blocked, and if the old balance of this Bank Account decremented with the given
-	 * 			amount of money isn't below the credit limit, and if the old balance of the given destination account incremented
-	 * 			with the given amount of money isn't above the balance limit, the given amount of money is withdrawn from this 
-	 * 			Bank Account, and deposited to the given destination account.
-	 * 			| if ((amount > 0) && !isBlocked() || !destination.isBlocked()) && (destination != null) && (destination != this) 
-	 * 			|			&& ((old.getBalance() - amount) >= getCreditLimit()) && ((old.destination.getBalance() + amount) <= getBalanceLimit())
-	 * 			|	then this.withdraw(amount)
-	 * 			|		 destination.deposit(amount)
-	 * 
-	 * @note	You can also change the effect clause into multiple post clauses, as specified below.
-	 * @post	If the given destination account is effective and not the same as this Bank Account, and if the given amount of money is positive,
-	 * 			and if this Bank Account isn't blocked, and if the old balance of this Bank Account decremented with the given amount of 
-	 * 			money isn't below the credit limit, and if the old balance of the given destination account incremented with the given 
-	 * 			amount of money isn't above the balance limit, the new balance of this Bank Account is equal to the old balance of this
-	 * 			Bank Account decremented with the given amount of money.
-	 *			| if ((amount > 0) && !isBlocked() || !destination.isBlocked()) && (destination != null) && (destination != this) 
-	 * 			|			&& ((old.getBalance() - amount) >= getCreditLimit()) && ((old.destination.getBalance() + amount) <= getBalanceLimit())
-	 * 			|	then new.getBalance() == old.getBalance() - amount
-	 * @post	If the given destination account is effective and not the same as this Bank Account, and if the given amount of money is positive,
-	 * 			and if this Bank Account isn't blocked, and if the old balance of this Bank Account decremented with the given amount of 
-	 * 			money isn't below the credit limit, and if the old balance of the given destination account incremented with the given 
-	 * 			amount of money isn't above the balance limit, the new balance of the destination account is equal to the old balance of the
-	 * 			destination account incremented with the given amount of money.
-	 * 			| if ((amount > 0) && !isBlocked() || !destination.isBlocked()) && (destination != null) && (destination != this) 
-	 * 			|			&& ((old.getBalance() - amount) >= getCreditLimit()) && ((old.destination.getBalance() + amount) <= getBalanceLimit())
-	 * 			|	then new.destination.getBalance() == old.destination.getBalance() + amount
-	 * @note	Even though we have specified in the formal specfication that we add or substract the amount from the current Balance, we have 
-	 * 			implemented otherwise. This is because sometimes this can cause overflows, which will cancel out these checkers.
+	 * @pre		The given destination account must be effective and different from this Bank Account.
+	 * 			| (destination != null) && (destination != this)
+	 * @effect	The given amount of money is withdrawn from this Bank Account, and deposited to the given destination account.
+	 * 			| this.withdraw(amount) && destination.deposit(amount)
 	 */
 	public void transferTo(long amount, BankAccount destination)
 	{
-		if (destination != null)
-		{
-			if ((amount > 0) && (!isBlocked() && !destination.isBlocked()) && (destination != this) && 
-					(getBalance() >= getCreditLimit() + amount) && (destination.getBalance() <= getBalanceLimit() - amount))
-			{
-				withdraw(amount);
-				destination.deposit(amount);
-			}
-		}
+		assert (destination != null) : "Precondition: Effective destination account.";
+		assert (destination != this) : "Precondition: Destination different from source.";
+		withdraw(amount);
+		destination.deposit(amount);
+	}
+	
+	/**
+	 * Check whether the given balance is a valid balance for any Bank Account.
+	 * 
+	 * @param 	balance
+	 * 			The balance to check.
+	 * @return	True if and only if ther given balance is not below the credit limit and not aboven the balance limit.
+	 * 			| result == ( (balance >= getCreditLimit()) && (balance <= getBalanceLimit()) )
+	 */
+	public static boolean isValidBalance(long balance)
+	{
+		return ((balance >= getCreditLimit()) && (balance <= getBalanceLimit()));
 	}
 	
 	/**
@@ -263,14 +293,18 @@ public class BankAccount {
 	 * 
 	 * @param 	balance
 	 * 			The new balance for this Bank Account.
-	 * @post	If the given balance isn't below the credit limit and not above the balance limit, the new 
-	 * 			balance of this Bank Account is equal to the given balance.
-	 * 			| if (balance >= getCreditLimit() && balance <= getBalanceLimit())
-	 * 			|	then new.getBalance() == balance
+	 * @pre		The given balance must be a valid balance for any Bank Account.
+	 * 			| isValidBalance(balance)
+	 * @post	The new balance of this Bank Account is equal to the given balance.
+	 * 			| new.getBalance() == balance 
+	 * 
+	 * @note	We make this method private, because deposit and withdraw control this function. We also add a @Model tag to this method to 
+	 * 			specify it is used in the specifications of other methods.
 	 */
-	public void setBalance(long balance)
+	@Raw @Model
+	private void setBalance(long balance)
 	{
-		if (balance >= getCreditLimit() && balance <= getBalanceLimit())
+		assert isValidBalance(balance): "Precondition: Valid balance for any Bank Account.";
 			this.balance = balance;
 	}
 	
@@ -288,6 +322,19 @@ public class BankAccount {
 	public static long getCreditLimit()
 	{
 		return creditLimit;
+	}
+	
+	/**
+	 * Check whether the given credit limit is a valid credit limit for all Bank Accounts.
+	 * 
+	 * @param 	creditLimit
+	 * 			The credit limit to check.
+	 * @return	True if and only if the given credit limit is not positive.
+	 * 			| result == (creditLimit <= 0)
+	 */
+	public static boolean isValidCreditLimit(long creditLimit)
+	{
+		return creditLimit <= 0;
 	}
 	
 	/**
@@ -323,6 +370,19 @@ public class BankAccount {
 	}
 	
 	/**
+	 * Check whether the given balance limit is a valid balance limit for all Bank Accounts.
+	 * 
+	 * @param 	balanceLimit
+	 * 			The balance limit to check.
+	 * @return	True if and only if the given balance limit is strict positive.
+	 * 			| result == (balanceLimit > 0)
+	 */
+	public static boolean isValidBalanceLimit(long balanceLimit)
+	{
+		return balanceLimit > 0;
+	}
+	
+	/**
 	 * Variable registering the balance limit that applies to all Bank Accounts.
 	 */
 	private static final long balanceLimit = Long.MAX_VALUE;
@@ -332,7 +392,7 @@ public class BankAccount {
 	 * 
 	 * @note	Some methods have no effect when invoked against blocked Bank Accounts.
 	 */
-	@Basic
+	@Basic @Raw
 	public boolean isBlocked()
 	{
 		return isBlocked;
@@ -346,6 +406,7 @@ public class BankAccount {
 	 * @post	The new blocked state of this Bank Account is equal to the given flag.
 	 * 			| new.isBlocked() == flag
 	 */
+	@Raw
 	public void setBlocked(boolean flag)
 	{
 		this.isBlocked = flag;
