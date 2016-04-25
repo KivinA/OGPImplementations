@@ -195,8 +195,8 @@ public class BankAccount {
 	 * 			amount of money isn't below the credit limit, and if the old balance of the given destination account incremented
 	 * 			with the given amount of money isn't above the balance limit, the given amount of money is withdrawn from this 
 	 * 			Bank Account, and deposited to the given destination account.
-	 * 			| if ((amount > 0) && (destination != null) && (destination != this) && ((old.getBalance() - amount) >= getCreditLimit())
-	 * 			|			&& ((old.destination.getBalance() + amount) <= getBalanceLimit())
+	 * 			| if ((amount > 0) && !isBlocked() || !destination.isBlocked()) && (destination != null) && (destination != this) 
+	 * 			|			&& ((old.getBalance() - amount) >= getCreditLimit()) && ((old.destination.getBalance() + amount) <= getBalanceLimit())
 	 * 			|	then this.withdraw(amount)
 	 * 			|		 destination.deposit(amount)
 	 * 
@@ -206,25 +206,30 @@ public class BankAccount {
 	 * 			money isn't below the credit limit, and if the old balance of the given destination account incremented with the given 
 	 * 			amount of money isn't above the balance limit, the new balance of this Bank Account is equal to the old balance of this
 	 * 			Bank Account decremented with the given amount of money.
-	 * 			| if ((destination != null) && (destination != this) && ((old.getBalance() - amount) >= getCreditLimit())
-	 * 			|			&& ((old.destination.getBalance() + amount) <= getBalanceLimit())
+	 *			| if ((amount > 0) && !isBlocked() || !destination.isBlocked()) && (destination != null) && (destination != this) 
+	 * 			|			&& ((old.getBalance() - amount) >= getCreditLimit()) && ((old.destination.getBalance() + amount) <= getBalanceLimit())
 	 * 			|	then new.getBalance() == old.getBalance() - amount
 	 * @post	If the given destination account is effective and not the same as this Bank Account, and if the given amount of money is positive,
 	 * 			and if this Bank Account isn't blocked, and if the old balance of this Bank Account decremented with the given amount of 
 	 * 			money isn't below the credit limit, and if the old balance of the given destination account incremented with the given 
 	 * 			amount of money isn't above the balance limit, the new balance of the destination account is equal to the old balance of the
 	 * 			destination account incremented with the given amount of money.
-	 * 			| if ((destination != null) && (destination != this) && ((old.getBalance() - amount) >= getCreditLimit())
-	 * 			|			&& ((old.destination.getBalance() + amount) <= getBalanceLimit())
+	 * 			| if ((amount > 0) && !isBlocked() || !destination.isBlocked()) && (destination != null) && (destination != this) 
+	 * 			|			&& ((old.getBalance() - amount) >= getCreditLimit()) && ((old.destination.getBalance() + amount) <= getBalanceLimit())
 	 * 			|	then new.destination.getBalance() == old.destination.getBalance() + amount
+	 * @note	Even though we have specified in the formal specfication that we add or substract the amount from the current Balance, we have 
+	 * 			implemented otherwise. This is because sometimes this can cause overflows, which will cancel out these checkers.
 	 */
 	public void transferTo(long amount, BankAccount destination)
 	{
-		if ((amount > 0) && (destination != null) && (destination != this) && (getBalance() - amount >= getCreditLimit()) && 
-				(destination.getBalance() + amount <= getBalanceLimit()))
+		if (destination != null)
 		{
-			withdraw(amount);
-			destination.deposit(amount);
+			if ((amount > 0) && (!isBlocked() && !destination.isBlocked()) && (destination != this) && 
+					(getBalance() >= getCreditLimit() + amount) && (destination.getBalance() <= getBalanceLimit() - amount))
+			{
+				withdraw(amount);
+				destination.deposit(amount);
+			}
 		}
 	}
 	
@@ -272,7 +277,8 @@ public class BankAccount {
 	 */
 	public static void setCreditLimit(long creditLimit)
 	{
-		BankAccount.creditLimit = creditLimit;
+		if (creditLimit <= getCreditLimit())
+			BankAccount.creditLimit = creditLimit;
 	}
 	
 	/**
