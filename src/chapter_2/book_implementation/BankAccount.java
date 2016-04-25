@@ -18,7 +18,11 @@ import be.kuleuven.cs.som.annotate.*;
  * 			| isValidBalanceLimit(getBalanceLimit())
  * @invar	The balance of each Bank Account must be a valid balance for any Bank Account.
  * 			| isValidBalance(getBalance())
- * 
+ * @invar	The number of tokens of each Bank Account must be a valid number of tokens for any Bank Account.
+ * 			| isValidNbTokens(getNbTokens())
+ * @invar	Each Bank Account can have each of its tokens at its index as a token at that index.
+ * 			| for each I in 1..getNbTokens()
+ * 			|	canHaveAsTokenAt(getTokenAt(I), I)
  * @note	Based on the code found in the book Object Oriented Programming with Java by Eric Steegmans.
  */
 public class BankAccount {
@@ -32,24 +36,38 @@ public class BankAccount {
 	 * 			The balance for this new Bank Account.
 	 * @param 	isBlocked
 	 * 			The blocked state for this new Bank Account.
+	 * @param	tokens
+	 * 			The series of tokens for this new Bank Account.
 	 * @pre		This new Bank account can have the given number as its number.
 	 * 			| canHaveAsNumber(number)
 	 * @pre		The given initial balance must be a valid balance for any Bank Account.
 	 * 			| isValidBalance(balance)
+	 * @pre		The given series of tokens must be effective.
+	 * 			| tokens != null
+	 * @pre		Each of the given tokens must be a valid token for any Bank Account.
+	 * 			| for each token in tokens:
+	 * 			| 	isValidToken(token)
+	 * @pre		The given series of tokens doesn't contain identical tokens.
+	 * 			| for each I ion 1..tokens.length - 1:
+	 * 			|	(for each J in 0..I-1:
+	 * 			|		(!tokens[I].equals(tokens[J])))
 	 * @post	The new number of this new Bank Account is equal to the given number.
 	 * 			| new.getNumber() == number
 	 * @post	The new balance of this new Bank Account is equal to the given initial balance.
 	 * 			| new.getBalance() == balance
 	 * @post	The new blocked state of this new Bank Account is equal to the given flag.
 	 * 			| new.isBlocked() == isBlocked
+	 * @post	The new series of tokens ascribed to this new Bank Account is equal to the given series of tokens.
+	 * 			| new.getTokens().equals(tokens)
 	 */
 	@Raw
-	public BankAccount(int number, long balance, boolean isBlocked)
+	public BankAccount(int number, long balance, boolean isBlocked, String... tokens) // The ... is a fancy way of saying String[]. This can only be used on the last formal argument!
 	{
 		assert canHaveAsNumber(number) : "Precondition: Bank Account can have its number as its number.";
 		this.number = number;
 		setBalance(balance);
 		setBlocked(isBlocked);
+		this.tokens = tokens.clone();
 	}
 	
 	/**
@@ -438,4 +456,145 @@ public class BankAccount {
 	 * Variable registering the blocked state of this Bank Account.
 	 */
 	private boolean isBlocked = false;
+	
+	/**
+	 * Return the number of tokens ascribed to this Bank Account.
+	 */
+	@Basic @Immutable @Raw
+	public int getNbTokens()
+	{
+		if (tokens != null)
+			return tokens.length;
+		return 0;
+	}
+	
+	/**
+	 * Check whether the given number of tokens is a valid number of tokens for any Bank Account.
+	 * 
+	 * @param 	nbTokens
+	 * 			The number of tokens to check.
+	 * @return	True if and only if the given number of tokens is zero or positive.
+	 * 			| result == (nbTokens >= 0)
+	 */
+	public static boolean isValidNbTokens(int nbTokens)
+	{
+		return (nbTokens >= 0);
+	}
+	
+	/**
+	 * Return the token ascribed to this Bank Account at the given index.
+	 * 
+	 * @param 	index
+	 * 			The index of the token to return.
+	 * @pre		The given index must be positive and may not exceed the number of tokens ascribed to this Bank Account.
+	 * 			| (index > 0) && (index <= getNbtokens())
+	 * @note	Tokens serve to identify end users ion electronic banking applications.
+	 */
+	public String getTokenAt(int index)
+	{
+		assert (index > 0) : "Precondition: Index must be positive.";
+		assert (index <= getNbTokens()) : "Precondition: Index may not exceed the number of tokens.";
+		return tokens[index - 1];
+	}
+	
+	/**
+	 * Constant reflecting the length of each token.
+	 * @return	Each token counts 6 symbols.
+	 * 			| result == 6
+	 * @note	The length of a token is the number of symbols it consists of.
+	 */
+	public final static int TOKEN_LENGH = 6;
+	
+	/**
+	 * Check whether the given token is a valid token for any Bank Account.
+	 * 
+	 * @param 	token
+	 * 			The token to check.
+	 * @return	False if the given token isn't effective.
+	 * 			| if (token == null)
+	 * 			|	then result == false
+	 * 			Otherwise, false if the given token doesn't have the proper length.
+	 * 			| else if (token.length != TOKEN_LENGTH)
+	 * 			| 	then result == false
+	 * 			Otherwise, true if and only if the given token only consists of letter (upper case and lower case) and digits.
+	 * 			| else
+	 * 			|	result == token.matches("[A-Za-z0-9]+")
+	 */
+	public static boolean isValidToken(String token)
+	{
+		if (token == null)
+			return false;
+		if (token.length() != TOKEN_LENGH)
+			return false;
+		return token.matches("[A-Za-z0-9]+");
+	}
+	
+	/**
+	 * Check whether this Bank Account can have the given token as a token at the given index.
+	 * 
+	 * @param 	token
+	 * 			The token to check.
+	 * @param 	index
+	 * 			The index for the token to check.
+	 * @return	False if the given token is not a valid token for any Bank Account.
+	 * 			| if (!isValidToken(token))
+	 * 			|	then result == false
+	 * 			Otherwise, false if the given index is negative or zero, or if that index exceeds the number of tokens ascribed to this Bank Account.
+	 * 			| else if ( (index <= 0) || (index > getNbTokens()) )
+	 * 			|	then result == false
+	 * 			Otherwise, true if and only if this Bank Account doesn't have an identical token at another index.
+	 * 			| else
+	 * 			| 	result == (for each I in 1..getNbTokens():
+	 * 			|					( (I == index) || (!token.equals(getTokenAt(I))) ) )
+	 */
+	@Raw
+	public boolean canHaveAsTokenAt(String token, int index)
+	{
+		if (!isValidToken(token))
+			return false;
+		if ((index <= 0) || (index > getNbTokens()))
+			return false;
+		for (int i = 1; i <= getNbTokens(); i++)
+			if ((i != index) && token.equals(getTokenAt(i)))
+				return false;
+		return true;
+	}
+	
+	/**
+	 * Set the token ascribed to this Bank Account at the given index to the given token.
+	 * 
+	 * @param 	token
+	 * 			The token to register.
+	 * @param 	index
+	 * 			The index for the token to register.
+	 * @pre		This Bank Account can have the given token as a token at the given index.
+	 * 			| canHaveAsTokenAt(token, index)
+	 * @post	This Bank Account has the given token as its token at the given index.
+	 * 			| new.getTokenAt(index) == token
+	 */
+	@Raw
+	public void setTokenAt(String token, int index)
+	{
+		assert canHaveAsTokenAt(token, index) : "Precondition: Can have as a token at the given index.";
+		this.tokens[index-1] = token;
+	}
+	
+	/**
+	 * Return all the tokens ascribed to this Bank Account.
+	 * 
+	 * @return	The length of the resulting array is equal to the number of tokens ascribed to this Bank Account.
+	 * 			| result.length == getNbTokens()
+	 * @return	Each element in the resulting array is equal to the token ascribed to this Bank Account at the corresponding index.
+	 * 			| for each i in 0..result.length-1
+	 * 			|	result[i].equals(getTokenAt(i+1))
+	 */
+	public String[] getTokens()
+	{
+		return tokens.clone();
+	}
+	
+	/**
+	 * Variable referencing an array assembling all the tokens ascribed to this Bank Account.
+	 */
+	private final String tokens[];
 }
