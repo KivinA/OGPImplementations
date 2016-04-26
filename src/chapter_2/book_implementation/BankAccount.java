@@ -1,5 +1,8 @@
 package chapter_2.book_implementation;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import be.kuleuven.cs.som.annotate.*;
 
 /**
@@ -64,10 +67,18 @@ public class BankAccount {
 	public BankAccount(int number, long balance, boolean isBlocked, String... tokens) // The ... is a fancy way of saying String[]. This can only be used on the last formal argument!
 	{
 		assert canHaveAsNumber(number) : "Precondition: Bank Account can have its number as its number.";
+		assert (tokens != null) : "Precondition: Given series of tokens must be effective.";
+		for (int i = 0; i < tokens.length; i++)
+		{
+			assert isValidToken(tokens[i]) : "Precondition: Token must be a valid token for any Bank Account.";
+			for (int j = 0; j < i; j++)
+				assert !tokens[i].equals(tokens[j]) : "Precondition: Series of tokens doesn't contain identical tokens.";
+		}
 		this.number = number;
 		setBalance(balance);
 		setBlocked(isBlocked);
 		this.tokens = tokens.clone();
+		allAccountNumbers.add(number);
 	}
 	
 	/**
@@ -99,6 +110,11 @@ public class BankAccount {
 		this(number, 0);
 	}
 	
+	public void terminate()
+	{
+		allAccountNumbers.remove(this.getNumber());
+	}
+	
 	/**
 	 * Return the number of this Bank Account.
 	 * 
@@ -122,13 +138,20 @@ public class BankAccount {
 	@Raw
 	public boolean canHaveAsNumber(int number)
 	{
-		return false;
+		return (number > 0) && ( (this.getNumber() == number) || (! allAccountNumbers.contains(number)));
 	}
 	
 	/**
 	 * Variable registering the number of this Bank Account.
 	 */
 	private final int number;
+	
+	/**
+	 * Variable referencing a set collecting all account numbers that have been used so far.
+	 * 
+	 * @note	More information on sets and other data structures is given starting from chapter 5.
+	 */
+	private static final Set<Integer> allAccountNumbers = new HashSet<Integer>();
 	
 	/**
 	 * Return the bank code that applies to all Bank Accounts.
