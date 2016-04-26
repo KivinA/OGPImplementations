@@ -162,53 +162,35 @@ public class BankAccountTest {
 	}
 	
 	@Test
-	public void deposit_LegalCase()
+	public void isValidBalanceLimit_LegalValue()
 	{
-		accountBalance1000.deposit(200);
-		assertEquals(1200L, accountBalance1000.getBalance());
+		assertTrue(BankAccount.isValidBalanceLimit(1));
 	}
 	
 	@Test
-	public void deposit_NegativeAmount()
+	public void isValidBalanceLimit_IllegalValue()
 	{
-		accountBalance1000.deposit(-1200);
-		assertEquals(1000L, accountBalance1000.getBalance());
+		assertFalse(BankAccount.isValidBalanceLimit(0));
 	}
 	
 	@Test
-	public void deposit_BalanceOverflow()
+	public void isValidBalance_LegalValue()
 	{
-		accountBalance1000.deposit(Long.MAX_VALUE);
-		assertEquals(1000L, accountBalance1000.getBalance());
+		assertTrue(BankAccount.isValidBalance(0));
 	}
 	
 	@Test
-	public void withdraw_LegalCase()
+	public void isValidBalane_ValueBelowCreditLimit()
 	{
-		accountBalance1000.withdraw(200);
-		assertEquals(800L, accountBalance1000.getBalance());
+		if(BankAccount.getCreditLimit() > Long.MIN_VALUE)
+			assertFalse(BankAccount.isValidBalance(BankAccount.getCreditLimit() - 1));
 	}
 	
 	@Test
-	public void withdraw_NegativeAmount()
+	public void isValidBalance_ValueAboveBalanceLimit()
 	{
-		accountBalance1000.withdraw(-1200);
-		assertEquals(1000L, accountBalance1000.getBalance());
-	}
-	
-	@Test
-	public void withdraw_BalanceOverflow()
-	{
-		accountBalance1000.withdraw(Long.MAX_VALUE);
-		assertEquals(1000L, accountBalance1000.getBalance());
-	}
-	
-	@Test
-	public void withdraw_BlockedAccount()
-	{
-		long oldBalance = blockedAccount.getBalance();
-		blockedAccount.withdraw(200);
-		assertEquals(oldBalance, blockedAccount.getBalance());
+		if (BankAccount.getBalanceLimit() < Long.MAX_VALUE)
+			assertFalse(BankAccount.isValidBalance(BankAccount.getBalanceLimit() + 1));
 	}
 	
 	@Test
@@ -226,7 +208,7 @@ public class BankAccountTest {
 	@Test
 	public void hasHigherBalanceThanLong_EqualCase()
 	{
-		assertFalse(accountBalance300.hasHigherBalanceThan(300));
+		assertFalse(accountBalance1000.hasHigherBalanceThan(1000));
 	}
 	
 	@Test
@@ -236,9 +218,71 @@ public class BankAccountTest {
 	}
 	
 	@Test
-	public void hasHigherBalanceThanAccount_NonEffectiveCase()
+	public void canAcceptForDeposit_NegativeAmount()
 	{
-		assertFalse(accountBalance500.hasHigherBalanceThan(null));
+		assertFalse(accountBalance300.canAcceptForDeposit(-200));
+	}
+	
+	@Test
+	public void canAcceptForDeposit_LongOverflow()
+	{
+		assertFalse(accountBalance300.canAcceptForDeposit(Long.MAX_VALUE));
+	}
+	
+	@Test
+	public void canAcceptForDeposit_ValueAboveBalanceLimit()
+	{
+		if (BankAccount.getBalanceLimit() < Long.MAX_VALUE)
+		{
+			accountBalance1000.deposit(BankAccount.getBalanceLimit() - accountBalance1000.getBalance());
+			assertFalse(accountBalance1000.canAcceptForDeposit(1));
+		}
+	}
+	
+	@Test
+	public void deposit_LegalCase()
+	{
+		accountBalance1000.deposit(200);
+		assertEquals(1200L, accountBalance1000.getBalance());
+	}
+	
+	@Test
+	public void canAcceptForWithdraw__NegativeAmount()
+	{
+		assertFalse(accountBalance300.canAcceptForWithdraw(-200));
+	}
+	
+	@Test
+	public void canAcceptForWithdraw_BlockedAccount()
+	{
+		assertFalse(blockedAccount.canAcceptForWithdraw(200));
+	}
+	
+	@Test
+	public void canAcceptForWithdraw_LongOverflow()
+	{
+		if (BankAccount.isValidBalance(-1))
+		{
+			accountBalance1000.withdraw(accountBalance1000.getBalance() + 1);
+			assertFalse(accountBalance1000.canAcceptForWithdraw(Long.MIN_VALUE));
+		}
+	}
+	
+	@Test
+	public void canAcceptForWithdraw_ValueBelowCreditLimit()
+	{
+		if (BankAccount.getCreditLimit() > Long.MIN_VALUE)
+		{
+			accountBalance1000.withdraw(BankAccount.getCreditLimit() + accountBalance1000.getBalance());
+			assertFalse(accountBalance1000.canAcceptForWithdraw(1));
+		}
+	}
+	
+	@Test
+	public void withdraw_LegalCase()
+	{
+		accountBalance1000.withdraw(200);
+		assertEquals(800L, accountBalance1000.getBalance());
 	}
 	
 	@Test
@@ -248,58 +292,6 @@ public class BankAccountTest {
 		assertEquals(900L, accountBalance1000.getBalance());
 		assertEquals(400L, accountBalance300.getBalance());
 	}
-	
-	@Test
-	public void transferTo_NonEffectiveDestination()
-	{
-		accountBalance1000.transferTo(100, null);
-		assertEquals(1000L, accountBalance1000.getBalance());
-	}
-	
-	@Test
-	public void transferTo_SameAccount()
-	{
-		accountBalance1000.transferTo(100, accountBalance1000);
-		assertEquals(1000L, accountBalance1000.getBalance());
-	}
-	
-	@Test
-	public void transferTo_NegativeAmount()
-	{
-		accountBalance1000.transferTo(-100, accountBalance300);
-		assertEquals(1000L, accountBalance1000.getBalance());
-		assertEquals(300L, accountBalance300.getBalance());
-	}
-	
-	@Test
-	public void transferTo_BlockedAccount()
-	{
-		long oldBalance = blockedAccount.getBalance();
-		blockedAccount.transferTo(100, accountBalance300);
-		assertEquals(oldBalance, blockedAccount.getBalance());
-		assertEquals(300L, accountBalance300.getBalance());
-	}
-	
-	@Test
-	public void transferTo_BalanceOverflowOnSource()
-	{
-		accountBalance300.transferTo(500, accountBalance500);
-		assertEquals(300L, accountBalance300.getBalance());
-		assertEquals(500L, accountBalance500.getBalance());
-	}
-	
-	@Test
-	public void transferTo_BalanceOverflownDestination()
-	{
-		BankAccount accountHighestBalance = new BankAccount(1234, BankAccount.getBalanceLimit());
-		accountBalance1000.transferTo(100, accountHighestBalance);
-		assertEquals(1000L, accountBalance1000.getBalance());
-		assertEquals(BankAccount.getBalanceLimit(), accountHighestBalance.getBalance());
-	}
-	
-
-	
-
 	
 	@Test
 	public void setBlocked_TrueCase()
@@ -327,5 +319,69 @@ public class BankAccountTest {
 	{
 		accountBalance1000.unblock();
 		assertFalse(accountBalance1000.isBlocked());
+	}
+	
+	@Test
+	public void isValidToken_TrueCase()
+	{
+		assertTrue(BankAccount.isValidToken("abc123"));
+	}
+	
+	@Test
+	public void isValidToken_NonEffectiveToken()
+	{
+		assertFalse(BankAccount.isValidToken(null));
+	}
+	
+	@Test
+	public void isValidToken_InvalidLength()
+	{
+		assertFalse(BankAccount.isValidToken("abc"));
+	}
+	
+	@Test
+	public void canHaveAsTokenAt_TrueCase()
+	{
+		assertTrue(accountWithTokens.canHaveAsTokenAt("abc123", 2));
+	}
+	
+	@Test
+	public void canHaveAsTokenAt_InvalidToken()
+	{
+		assertFalse(accountWithTokens.canHaveAsTokenAt("Abc", 2));
+	}
+	
+	@Test
+	public void canHaveAsTokenAt_NonPositiveIndex()
+	{
+		assertFalse(accountWithTokens.canHaveAsTokenAt("abc123", -1));
+	}
+	
+	@Test
+	public void canHaveAsTokenAt_IndexTooHigh()
+	{
+		assertFalse(accountWithTokens.canHaveAsTokenAt("Abcdef", 3));
+	}
+	
+	@Test
+	public void canHaveAsTokenAt_DuplicateToken()
+	{
+		assertFalse(accountWithTokens.canHaveAsTokenAt("abcdef", 2));
+	}
+	
+	@Test
+	public void setTokenAt_LegalCase()
+	{
+		accountWithTokens.setTokenAt("zyxwvu", 2);
+		assertEquals("zyxwvu", accountWithTokens.getTokenAt(2));
+	}
+	
+	@Test
+	public void getTokens_SingleCase()
+	{
+		String[] tokens = accountWithTokens.getTokens();
+		assertEquals(2, tokens.length);
+		assertEquals("abcdef", tokens[0]);
+		assertEquals("123456", tokens[1]);
 	}
 }
