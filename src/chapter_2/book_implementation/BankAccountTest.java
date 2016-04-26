@@ -125,9 +125,40 @@ public class BankAccountTest {
 	}
 	
 	@Test
-	public void canHaveAsNumber_OwnValue()
+	public void canHaveAsNumber_OwnNumber()
 	{
-		assertFalse(accountBalance300.canHaveAsNumber(accountBalance300.getNumber()));
+		assertTrue(accountBalance300.canHaveAsNumber(accountBalance300.getNumber()));
+	}
+	
+	@Test
+	public void canHaveAsNumber_NonPositiveValue()
+	{
+		assertFalse(accountBalance300.canHaveAsNumber(-123));
+	}
+	
+	@Test
+	public void canHaveAsNumber_DuplicateValue()
+	{
+		assertFalse(accountBalance300.canHaveAsNumber(accountBalance500.getNumber()));
+	}
+	
+	@Test
+	public void isValidCreditLimit_LegalValue()
+	{
+		assertTrue(BankAccount.isValidCreditLimit(0));
+	}
+	
+	@Test
+	public void isValidCreditLimit_IllegalValue()
+	{
+		assertFalse(BankAccount.isValidCreditLimit(1));
+	}
+	
+	@Test
+	public void setCreditLimit_LegalCase()
+	{
+		BankAccount.setCreditLimit(-1000);
+		assertEquals(-1000L, BankAccount.getCreditLimit());
 	}
 	
 	@Test
@@ -266,20 +297,9 @@ public class BankAccountTest {
 		assertEquals(BankAccount.getBalanceLimit(), accountHighestBalance.getBalance());
 	}
 	
-	@Test
-	public void setCreditLimit_LegalCase()
-	{
-		BankAccount.setCreditLimit(-1000);
-		assertEquals(-1000L, BankAccount.getCreditLimit());
-	}
+
 	
-	@Test
-	public void setCreditLimit_IllegalCase()
-	{
-		long oldLimit = BankAccount.getCreditLimit();
-		BankAccount.setCreditLimit(100);
-		assertEquals(oldLimit, BankAccount.getCreditLimit());
-	}
+
 	
 	@Test
 	public void setBlocked_TrueCase()
