@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassDiagram>
+    <Class name="chapter_2.book_implementation.BankApplication" x="25" y="11">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Communication destinationClassName="chapter_2.book_implementation.BankAccount"/>
+    </Class>
+    <Class name="chapter_2.book_implementation.BankAccount" x="33" y="119">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+    </Class>
+    <Class name="chapter_2.book_implementation.BankAccountTest" x="1063" y="113">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Association
+            destinationClassName="chapter_2.book_implementation.BankAccount"
+            endpointName="accountBalance1000" kind="Simple">
+            <Point x="299" y="359"/>
+        </Association>
+        <Association
+            destinationClassName="chapter_2.book_implementation.BankAccount"
+            endpointName="accountBalance300" kind="Simple">
+            <Point x="1211" y="27"/>
+            <Point x="165" y="27"/>
+        </Association>
+        <Communication destinationClassName="chapter_2.book_implementation.BankAccount"/>
+    </Class>
+</ClassDiagram>
