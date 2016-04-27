@@ -49,9 +49,19 @@ class BankAccount {
 	 * 			| !isValidBalance(balance)
 	 */
 	@Raw
-	public BankAccount(int number, long balance, boolean isBlocked) throws IllegalAmountException, IllegalNumberException
+	public BankAccount(int number, long balance, long creditLimit, boolean isBlocked) throws IllegalAmountException, IllegalNumberException
 	{
+		if (!canHaveAsNumber(number))
+			throw new IllegalNumberException(number, this);
 		this.number = number;
+		if (!isPossibleCreditLimit(creditLimit))
+			throw new IllegalAmountException(creditLimit, this);
+		/*
+		 * We could use the setter in this case to set the credit limit, but because of the dependency between balance and credit limit,
+		 * we must initialise credit limit more directly, because otherwise the checker of canHaveAsCreditLimit might fail, because the
+		 * matchesBalanceCreditLimit checker might fail because balance hasn't been initialised yet.
+		 */
+		this.creditLimit = creditLimit;
 		setBalance(balance);
 		setBlocked(isBlocked);
 		allAccountNumbers.add(number);
@@ -68,7 +78,7 @@ class BankAccount {
 	 */
 	public BankAccount(int number)
 	{
-		this(number, 0, false);
+		this(number, 0, -1000L, false);
 	}
 	
 	/**
@@ -399,7 +409,7 @@ class BankAccount {
 	 * @note	The credit limit expresses the lowest possible value for the balance of any Bank Account.
 	 */
 	@Basic
-	public static long getCreditLimit()
+	public long getCreditLimit()
 	{
 		return creditLimit;
 	}
@@ -418,16 +428,17 @@ class BankAccount {
 	}
 	
 	/**
-	 * Check whether the given credit limit is a valid credit limit for all Bank Accounts.
+	 * Check whether this Bank Account can have the given credit limit as its credit limit.
 	 * 
 	 * @param 	creditLimit
 	 * 			The credit limit to check.
-	 * @return	True if and only if the given credit limit is not positive.
-	 * 			| result == (creditLimit <= 0)
+	 * @return	True if and only if the given credit limit is a possible credit limit for this Bank Account, and if the given 
+	 * 			credit limit matches with the balance of this Bank Account.
+	 * 			| result == ( isPossibleCreditLimit(creditLimit) && matchesBalanceCreditLimit(getBalance(), creditLimit) )
 	 */
-	public static boolean isValidCreditLimit(long creditLimit)
+	public boolean canHaveAsCreditLimit(long creditLimit)
 	{
-		return isPossibleCreditLimit(creditLimit);
+		return isPossibleCreditLimit(creditLimit) && matchesBalanceCreditLimit(getBalance(), creditLimit);
 	}
 	
 	/**
@@ -439,17 +450,21 @@ class BankAccount {
 	 * 			the new credit limit that applies to all Bank Accounts is equal to the given credit limit.
 	 * 			| if (creditLimit <= getCreditLimit())
 	 * 			|	then new.getCreditLimit() == creditLimit
+	 * @throws	IllegalAmountException
+	 * 			This Bank Account cannot have the given credit limit as its credit limit.
+	 * 			| !canHaveAsCreditLimit(creditLimit)
 	 */
-	public static void setCreditLimit(long creditLimit)
+	public void setCreditLimit(long creditLimit) throws IllegalAmountException
 	{
-		if (creditLimit <= getCreditLimit())
-			BankAccount.creditLimit = creditLimit;
+		if (!canHaveAsCreditLimit(creditLimit))
+			throw new IllegalAmountException(creditLimit, this);
+		this.creditLimit = creditLimit;
 	}
 	
 	/**
 	 * Variable registerting the credit limit that applies to all Bank Accounts.
 	 */
-	private static long creditLimit = 0L;
+	private long creditLimit = 0L;
 	
 	/**
 	 * Return the balance limit that applies to all Bank Accounts.

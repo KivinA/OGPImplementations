@@ -10,7 +10,7 @@ import org.junit.*;
  * A class collection tests for the class of Bank Accounts.
  * 
  * @author	Kevin Algoet & Eric Steegmans
- * @version	1.0
+ * @version	2.0
  * 
  * @Note	Based on the code found in the book Object Oriented Programming with Java by Eric Steegmans.
  */

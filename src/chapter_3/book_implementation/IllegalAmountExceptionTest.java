@@ -13,5 +13,6 @@ public class IllegalAmountExceptionTest {
 		assertSame(theAccount, exception.getAccount());
 		assertNull(exception.getMessage());
 		assertNull(exception.getCause());
+		theAccount.terminate();
 	}
 }
