@@ -6,7 +6,8 @@ import java.util.Set;
 import be.kuleuven.cs.som.annotate.*;
 
 /**
- * A class of Bank Account involving a bank code, a number, a credit limit, a balance limit, a balance and a blocking facility.
+ * A class of Bank Account involving a bank code, a number, a credit limit, a balance limit, a balance, a blocking facility
+ * and a series of tokens.
  * 
  * @author 	Kevin Algoet & Eric Steegmans
  * @version	2.0
