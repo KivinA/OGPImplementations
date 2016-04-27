@@ -8,7 +8,7 @@ import be.kuleuven.cs.som.annotate.*;
  * @author 	Kevin Algoet & Eric Steegmans
  * @version	3.0
  * 
- * @note	Each illegal amount exception involves the illegal amount and the Bank Account.
+ * @note	Each Illegal Amount Exception involves the illegal amount and the Bank Account.
  * @note	Based on the code found in the book Object Oriented Programming with Java by Eric Steegmans.
  */
 public class IllegalAmountException extends RuntimeException {
