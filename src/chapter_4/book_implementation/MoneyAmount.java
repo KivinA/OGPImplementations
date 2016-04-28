@@ -1,6 +1,9 @@
 package chapter_4.book_implementation;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
+
 import be.kuleuven.cs.som.annotate.*;
 
 /**
@@ -40,7 +43,8 @@ class MoneyAmount implements Comparable<MoneyAmount>{
 	 * 			| ! isValidCurrency()
 	 */
 	@Raw
-	public MoneyAmount(BigDecimal numeral, Currency currency) {
+	public MoneyAmount(BigDecimal numeral, Currency currency) throws IllegalArgumentException
+	{
 		if (numeral == null)
 			throw new IllegalArgumentException("Non-effective numeral.");
 		if (!isValidCurrency(currency))
@@ -72,7 +76,7 @@ class MoneyAmount implements Comparable<MoneyAmount>{
 	 * 			Currency.EUR.
 	 * 			| EUR_0.equals(new MoneyAmount(BigDecimal.ZERO, Currency.EUR)
 	 */
-	public final static public MoneyAmount EUR_0 = new MoneyAmount(BigDecimal.ZERO, Currency.EUR);
+	public final static MoneyAmount EUR_0 = new MoneyAmount(BigDecimal.ZERO, Currency.EUR);
 	
 	/**
 	 * Variable referencing a Money Amount of 1.00 EUR.
@@ -151,7 +155,7 @@ class MoneyAmount implements Comparable<MoneyAmount>{
 	 * 			The given Currency isn't valid for any Money Amount.
 	 * 			| !isValidCurrency(currency)
 	 */
-	public MoneyAmount toCurrency(Currency currency)
+	public MoneyAmount toCurrency(Currency currency) throws IllegalArgumentException
 	{
 		if (!isValidCurrency(currency))
 			throw new IllegalArgumentException("Non-effective currency.");
@@ -198,12 +202,162 @@ class MoneyAmount implements Comparable<MoneyAmount>{
 		return new MoneyAmount(getNumeral().multiply(factorDec), getCurrency());
 	}
 	
-	
-	
-	@Override
-	public int compareTo(MoneyAmount o) {
-		// TODO Auto-generated method stub
-		return 0;
+	/**
+	 * Compute the sum of this Money Amount and the other Money Amount.
+	 * 
+	 * @param 	other
+	 * 			The other Money Amount to add.
+	 * @return	The resulting Money Amount has the same Currency as this Money Amount.
+	 * 			| result.getCurrenct() == this.getCurrency()
+	 * @return	If the two Money Amounts use the same Currency, the numeral of the resulting Money Amount
+	 * 			is equal to the sum of the numerals of both Money Amounts.
+	 * 			| if (this.getCurrency() == other.getCurrency()
+	 * 			|	then result.getNumeral().equals(this.getNumeral().add(other.getNumeral()))
+	 * @return	If the two Money Amounts use different Currencies, the resulting Money Amount is equal to the sum
+	 * 			of this Money Amount and the other Money Amount expressed in the Currency of this Money Amount.
+	 * 			| if (this.getCurrency() != other.getCurrency())
+	 * 			|	then result.equals(this.add(other.toCurrency(getCurrency())
+	 * @throws 	IllegalArgumentException
+	 * 			The other Money Amount isn't effective.
+	 * 			| other == null
+	 */
+	public MoneyAmount add(MoneyAmount other) throws IllegalArgumentException
+	{
+		if (other == null)
+			throw new IllegalArgumentException("Non-effective Money Amount.");
+		if (getCurrency() == other.getCurrency())
+			return new MoneyAmount(getNumeral().add(other.getNumeral()), getCurrency());
+		return add(other.toCurrency(getCurrency()));
 	}
 	
+	/**
+	 * Compute the substraction of the other Money Amount from this Money Amount.
+	 * 
+	 * @param 	other
+	 * 			The Money Amount to substract.
+	 * @return	The resulting Money amount is equal to the sum of this Money Amount and the negation of the other Money Amount.
+	 * 			| result.equals(this.add(other.negate()))
+	 * @throws	IllegalArgumentException
+	 * 			The other Money Amount isn't effective.
+	 * 			| other == null
+	 */
+	public MoneyAmount substract(MoneyAmount other) throws IllegalArgumentException
+	{
+		if (other == null)
+			throw new IllegalArgumentException("Non-effective Money Amount");
+		if (getCurrency() == other.getCurrency())
+			return new MoneyAmount(getNumeral().subtract(other.getNumeral()), getCurrency());
+		return substract(other.toCurrency(getCurrency()));
+	}
+	
+	/**
+	 * Compare this Money Amount with the other Money Amount.
+	 * 
+	 * @param	other
+	 * 			The other Money Amount to compare with.
+	 * @return	The result is equal to the comparison of the numeral of this Money Amount with the numeral of the other Money Amount.
+	 * 			| result == getNumeral().compareTo(other.getNumeral())
+	 * @throws	ClassCastException
+	 * 			The other Money Amount isn't effective or this Money Amount and the given Money Amount use different Currencies.
+	 * 			| ( (other == null) || (this.getCurrency() != other.getCurrency()) )
+	 */
+	@Override
+	public int compareTo(MoneyAmount other) throws ClassCastException {
+		if (other == null)
+			throw new ClassCastException("Non-effective Money Amount.");
+		if (getCurrency() != other.getCurrency())
+			throw new ClassCastException("Incompatible Money Amounts.");
+		return getNumeral().compareTo(other.getNumeral());
+	}
+	
+	/**
+	 * Return the signum of this Money Amount.
+	 * 
+	 * @return	The signum of the numeral of this Money Amount.
+	 * 			| result == getNumeral().signum()
+	 */
+	public int signum()
+	{
+		return getNumeral().signum();
+	}
+	
+	/**
+	 * Check whether this Money Amount has the same value as the other Money Amount.
+	 * 
+	 * @param 	other
+	 * 			The other Money Amount to compare with.
+	 * @return	True if and only if this Money Amount is equals to the other Money Amount expressed in the currency of this Money Amount.
+	 * 			| result == this.equals(other.toCurrency(getCurrency()))
+	 * @throws	IllegalArgumentException
+	 * 			The other Money Amount isn't effective.
+	 * 			| other == null
+	 */
+	public boolean hasSameValueAs(MoneyAmount other) throws IllegalArgumentException
+	{
+		if (other == null)
+			throw new IllegalArgumentException("Non-effective Money Amount");
+		return this.equals(other.toCurrency(getCurrency()));
+	}
+	
+	/**
+	 * Check whether this Money Amount is equal to the given Object.
+	 * 
+	 * @return	True if and only if the given Object is effective, if this Money Amount and the given Object belong to the same class,
+	 * 			and if this Money Amount and the other Object interpreted as a Money Amount have equal numerals and equal Currencies.
+	 * 			| result == ( (other != null) && (this.getClass() == other.getClass()) 
+	 * 			|				&& (this.getNumeral().equals((MoneyAmount other).getNumeral()))
+	 * 			|				&& (this.getCurrency() == ((MoneyAmount other).getCurrency())) )
+	 */
+	@Override
+	public boolean equals(Object other)
+	{
+		if (other == null)
+			return false;
+		if (getClass() != other.getClass())
+			return false;
+		MoneyAmount otherAmount = (MoneyAmount) other;
+		return (this.getNumeral().equals(otherAmount.getNumeral()) && (getCurrency() == otherAmount.getCurrency()));
+	}
+	
+	/**
+	 * Return the hash code for this Money Amount.
+	 */
+	@Override
+	public int hashCode()
+	{
+		return getNumeral().hashCode() + getCurrency().hashCode();
+	}
+	
+	/**
+	 * Return a textual representation of this Money Amount.
+	 * 
+	 * @return	A string consisting of the textual representation of the numeral of this Money Amount, followed by the textual representation
+	 * 			of its Currency, seperated by a space and eclosed in square brackets.
+	 * 			| results.equals("[" + getNumeral().toString() + " " + getCurrency().toString() + "]")
+	 */
+	@Override
+	public String toString()
+	{
+		return "[" + getNumeral().toString() + " " + getCurrency().toString() + "]";
+	}
+	
+	/**
+	 * Return a mathematical context to round the given big decimal to 2 fractional digits.
+	 * 
+	 * @param 	value
+	 * 			The value to compute a mathematical context for.
+	 * @pre		The given value must be effective.
+	 * 			| value != null
+	 * @return	The precision of the resulting mathematical context is equal to the precision of the given value diminished with its scale and
+	 * 			incremented by 2.
+	 * 			| result.getPrecision() == value.precision() - value.scale() + 2
+	 * @return	The resulting mathematical context uses HALF_DOWN as its rounding mode.
+	 * 			| result.getRoundingMode() == RoundingMode.HALF_DOWN
+	 */
+	@Model
+	static MathContext getContextForScale2(BigDecimal value)
+	{
+		assert value != null : "Value must be effective!";
+		return new MathContext(value.precision() - value.scale() + 2, RoundingMode.HALF_DOWN);
+	}
 }
