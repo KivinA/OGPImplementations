@@ -1,7 +1,10 @@
 package chapter_4.book_implementation;
 
 import static org.junit.Assert.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import org.junit.*;
+
 
 /**
  * A class collection tests for the class of Bank Accounts.
@@ -13,21 +16,17 @@ import org.junit.*;
  */
 public class BankAccountTest {
 	
-	private static BankAccount accountBalance0, accountBalanceMAX;
+	private static BankAccount accountBalance0;
 
 	private BankAccount accountBalance100, accountBalance500;
 	
-	/**
-	 * Set up a mutable test fixture.
-	 * 
-	 * @post	The variable accountBalance100 references a new Bank Account with a balance of 100.
-	 * @post	The variable accountBalance500	references a new Bank Account with a balance of 500.
-	 */
+	private static MoneyAmount EUR_50, EUR_100, EUR_M1000, USD_0;
+	
 	@Before
 	public void setUpMutableFixture()
 	{
-		accountBalance100 = new BankAccount(1111111, 100, 0, false);
-		accountBalance500 = new BankAccount(2222222, 500, 0, false);
+		accountBalance100 = new BankAccount(1111111, MoneyAmount.EUR_0, EUR_100, false);
+		accountBalance500 = new BankAccount(2222222, MoneyAmount.EUR_0, new MoneyAmount(new BigDecimal(500)), false);
 	}
 	
 	@After
@@ -37,26 +36,23 @@ public class BankAccountTest {
 		accountBalance500.terminate();
 	}
 	
-	/**
-	 * Set up an immutable test fixture.
-	 * 
-	 * @post	The variable accountBalance300 references a new Bank Account with balance 300.
-	 * @post	The variable accountBalance500 references a new Bank Account with balance 500.
-	 */
 	@BeforeClass
 	public static void setUpImmutableFixture()
 	{
-		accountBalance0 = new BankAccount(1, 0, -2000L, false);
-		accountBalanceMAX = new BankAccount(3, Long.MAX_VALUE, 0, false);
+		EUR_50 = new MoneyAmount(new BigDecimal(BigInteger.valueOf(50)));
+		EUR_100 = new MoneyAmount(new BigDecimal(BigInteger.valueOf(100)));
+		EUR_M1000 = new MoneyAmount(new BigDecimal(BigInteger.valueOf(-1000)));
+		USD_0 = new MoneyAmount(BigDecimal.ZERO, Currency.USD);
+		accountBalance0 = new BankAccount(1, EUR_M1000, MoneyAmount.EUR_0, false);
 	}
 	
 	@Test
 	public void extendedConstructor_LegalCase()
 	{
-		BankAccount theAccount = new BankAccount(1234, 1L, 0L, false);
-		assertEquals(1234, theAccount.getNumber());
-		assertEquals(1L, theAccount.getBalance());
-		assertEquals(0L, theAccount.getCreditLimit());
+		BankAccount theAccount = new BankAccount(12345, MoneyAmount.EUR_0, MoneyAmount.EUR_1, false);
+		assertEquals(12345, theAccount.getNumber());
+		assertEquals(MoneyAmount.EUR_1, theAccount.getBalance());
+		assertEquals(MoneyAmount.EUR_0, theAccount.getCreditLimit());
 		assertFalse(theAccount.isBlocked());
 		theAccount.terminate();
 	}
@@ -64,25 +60,25 @@ public class BankAccountTest {
 	@Test (expected = IllegalAmountException.class)
 	public void extendedConstructor_IllegalCreditLimit() throws Exception
 	{
-		new BankAccount(12345, 100L, 1L, false);
+		new BankAccount(12345, MoneyAmount.EUR_1, EUR_100, false);
 	}
 	
 	@Test (expected = IllegalAmountException.class)
 	public void extendedConstructor_IllegalBalance() throws Exception
 	{
-		new BankAccount(12345, Long.MIN_VALUE, Long.MIN_VALUE, false);
+		new BankAccount(12345, MoneyAmount.EUR_0, null, false);
 	}
 	
 	@Test (expected = IllegalAmountException.class)
 	public void extendedConstructor_NonMatchingBalanceCreditLimit() throws Exception
 	{
-		new BankAccount(12345, -200, -100, false);
+		new BankAccount(12345, USD_0, EUR_100, false);
 	}
 	
 	@Test (expected = IllegalAmountException.class)
 	public void extendedConstructor_NonMatchingBalanceCreditLimit2() throws Exception
 	{
-		new BankAccount(12345, 0, 0, false);
+		new BankAccount(12345, MoneyAmount.EUR_0, MoneyAmount.EUR_0, false);
 	}
 	
 	@Test
@@ -90,8 +86,8 @@ public class BankAccountTest {
 	{
 		BankAccount theAccount = new BankAccount(12345);
 		assertEquals(12345, theAccount.getNumber());
-		assertEquals(0L, theAccount.getBalance());
-		assertEquals(-1000L, theAccount.getCreditLimit());
+		assertEquals(MoneyAmount.EUR_0, theAccount.getBalance());
+		assertEquals(EUR_M1000, theAccount.getCreditLimit());
 		assertFalse(theAccount.isBlocked());
 		theAccount.terminate();
 	}
@@ -135,118 +131,142 @@ public class BankAccountTest {
 	@Test
 	public void isPossibleCreditLimit_TrueCase()
 	{
-		assertTrue(BankAccount.isPossibleCreditLimit(-12));
+		assertTrue(BankAccount.isPossibleCreditLimit(EUR_M1000));
 	}
 	
 	@Test
-	public void isPossibleCreditLimit_FalseCase()
+	public void isPossibleCreditLimit_NonEffectiveAmount()
 	{
-		assertFalse(BankAccount.isPossibleCreditLimit(1));
+		assertFalse(BankAccount.isPossibleCreditLimit(null));
+	}
+	
+	@Test
+	public void isPossibleCreditLimit_NegativeAmount()
+	{
+		assertFalse(BankAccount.isPossibleCreditLimit(MoneyAmount.EUR_1));
 	}
 	
 	@Test
 	public void canHaveAsCreditLimit_TrueCase()
 	{
-		assertTrue(accountBalance0.canHaveAsCreditLimit(-12));
+		assertTrue(accountBalance0.canHaveAsCreditLimit(EUR_M1000));
 	}
 	
 	@Test
 	public void canHaveAsCreditLimit_ImpossibleCreditLimit()
 	{
-		assertFalse(accountBalance0.canHaveAsCreditLimit(100));
+		assertFalse(accountBalance0.canHaveAsCreditLimit(EUR_100));
 	}
 	
 	@Test
 	public void canHaveAsCreditLimit_ConflictWithBalance()
 	{
-		assertFalse(accountBalance0.canHaveAsCreditLimit(0));
+		assertFalse(accountBalance0.canHaveAsCreditLimit(MoneyAmount.EUR_0));
 	}
 	
 	@Test
 	public void setCreditLimit_LegalCase()
 	{
-		accountBalance0.setCreditLimit(-23);
-		assertEquals(-23L, accountBalance0.getCreditLimit());
+		MoneyAmount EUR_M23 = new MoneyAmount(BigDecimal.valueOf(-2350, 2));
+		accountBalance0.setCreditLimit(EUR_M23);
+		assertEquals(EUR_M23, accountBalance0.getCreditLimit());
 	}
 	
 	@Test (expected = IllegalAmountException.class)
 	public void setCreditLimit_IllegalCase() throws Exception
 	{
-		accountBalance0.setCreditLimit(31);
-	}
-	
-	@Test
-	public void isValidBalanceLimit_TrueCase()
-	{
-		assertTrue(BankAccount.isValidBalanceLimit(1));
-	}
-	
-	@Test
-	public void isValidBalanceLimit_FalseCase()
-	{
-		assertFalse(BankAccount.isValidBalanceLimit(0));
+		accountBalance0.setCreditLimit(EUR_100);
 	}
 	
 	@Test
 	public void isPossibleBalance_TrueCase()
 	{
-		assertTrue(BankAccount.isPossibleBalance(BankAccount.getBalanceLimit()));
+		assertTrue(BankAccount.isPossibleBalance(MoneyAmount.EUR_1));
 	}
 	
 	@Test
 	public void isPossibleBalance_FalsCase()
 	{
-		if(BankAccount.getBalanceLimit() < Long.MAX_VALUE)
-			assertFalse(BankAccount.isPossibleBalance(BankAccount.getBalanceLimit() + 1));
+		assertFalse(BankAccount.isPossibleBalance(null));
 	}
 	
 	@Test
 	public void canHaveAsBalance_TrueCase()
 	{
-		assertTrue(accountBalance0.canHaveAsBalance(89));
+		assertTrue(accountBalance0.canHaveAsBalance(EUR_100));
 	}
 	
 	@Test
 	public void canHaveAsBalance_ImpossibleBalance()
 	{
-		if (BankAccount.getBalanceLimit() < Long.MAX_VALUE)
-			assertFalse(accountBalance0.canHaveAsBalance(Long.MAX_VALUE));
+		assertFalse(accountBalance0.canHaveAsBalance(null));
 	}
 	
 	@Test
 	public void canHaveAsBalance__ConflictWithCreditLimit()
 	{
-		assertFalse(accountBalance0.canHaveAsBalance(-2000));
+		accountBalance0.setCreditLimit(EUR_M1000);
+		assertFalse(accountBalance0.canHaveAsBalance(new MoneyAmount(BigDecimal.valueOf(-200000, 2))));
 	}
 	
 	@Test
 	public void matchesBalanceCreditLimit_TrueCase()
 	{
-		assertTrue(BankAccount.matchesBalanceCreditLimit(100, 50));
+		assertTrue(BankAccount.matchesBalanceCreditLimit(EUR_100, EUR_50));
+	}
+	
+	@Test
+	public void matchesBalanceCreditLimit_NonEffectiveBalance()
+	{
+		assertFalse(BankAccount.matchesBalanceCreditLimit(null, EUR_M1000));
+	}
+	
+	@Test
+	public void matchesBalanceCreditLimit_NonEffectiveCreditLimit()
+	{
+		assertFalse(BankAccount.matchesBalanceCreditLimit(EUR_100, null));
 	}
 	
 	@Test
 	public void matchesBalanceCreditLimit_BalanceBelowLimit()
 	{
-		assertFalse(BankAccount.matchesBalanceCreditLimit(10, 50));
+		assertFalse(BankAccount.matchesBalanceCreditLimit(EUR_50, EUR_100));
 	}
 	
 	@Test
 	public void matchesBalanceCreditLimit_EqualValues()
 	{
-		assertFalse(BankAccount.matchesBalanceCreditLimit(50, 50));
+		assertFalse(BankAccount.matchesBalanceCreditLimit(EUR_50, EUR_50));
 	}
 	
 	@Test
-	public void hasHigherBalanceThanLong_TrueCase()
+	public void hasHigherBalanceThanValue_TrueCase()
 	{
-		assertTrue(accountBalance0.hasHigherBalanceThan(-200));
+		assertTrue(accountBalance0.hasHigherBalanceThan(EUR_M1000));
 	}
 	
 	@Test
-	public void hasHigherBalanceThanLong_FalseCase()
+	public void hasHigherBalanceThanValue_BalanceLower()
 	{
-		assertFalse(accountBalance0.hasHigherBalanceThan(500));
+		assertFalse(accountBalance0.hasHigherBalanceThan(EUR_100));
+	}
+	
+	@Test
+	public void hasHigherBalanceThanValue_BalanceEqual()
+	{
+		assertFalse(accountBalance0.hasHigherBalanceThan(MoneyAmount.EUR_0));
+	}
+	
+	@Test (expected = IllegalArgumentException.class)
+	public void hasHigherBalanceThanValue_NonEffectiveAmount() throws Exception
+	{
+		accountBalance0.hasHigherBalanceThan((MoneyAmount) null);
+	}
+	
+	@Test (expected = IllegalArgumentException.class)
+	public void hasHigherBalanceThanValue_DifferentCurrencies() throws Exception
+	{
+		accountBalance0.hasHigherBalanceThan(USD_0);
 	}
 	
 	@Test
@@ -264,115 +284,115 @@ public class BankAccountTest {
 	@Test (expected = IllegalArgumentException.class)
 	public void hasHigherBalanceThanAccount_NonEffectiveCase() throws Exception
 	{
-		accountBalance100.hasHigherBalanceThan(null);
+		accountBalance100.hasHigherBalanceThan((BankAccount) null);
 	}
 	
 	@Test
 	public void canAcceptForDeposit_TrueCase()
 	{
-		assertTrue(accountBalance0.canAcceptForDeposit(200));
+		assertTrue(accountBalance0.canAcceptForDeposit(EUR_100));
+	}
+	
+	@Test
+	public void canAcceptForDeposit_NonEffectiveAmount()
+	{
+		assertFalse(accountBalance0.canAcceptForDeposit(null));
 	}
 	
 	@Test
 	public void canAcceptForDeposit_NegativeAmount()
 	{
-		assertFalse(accountBalance0.canAcceptForDeposit(-200));
+		assertFalse(accountBalance0.canAcceptForDeposit(EUR_M1000));
 	}
 	
 	@Test
-	public void canAcceptForDeposit_LongOverflow()
+	public void canAcceptForDeposit_ZeroAmount()
 	{
-		assertFalse(accountBalance100.canAcceptForDeposit(Long.MAX_VALUE));
-	}
-	
-	@Test
-	public void canAcceptForDeposit_ValueAboveBalanceLimit()
-	{
-		if (BankAccount.getBalanceLimit() < Long.MAX_VALUE)
-		{
-			accountBalance100.deposit(BankAccount.getBalanceLimit() - accountBalance100.getBalance());
-			assertFalse(accountBalance100.canAcceptForDeposit(1));
-		}
+		assertFalse(accountBalance100.canAcceptForDeposit(MoneyAmount.EUR_0));
 	}
 	
 	@Test
 	public void deposit_LegalCase()
 	{
-		accountBalance100.deposit(1);
-		assertEquals(101L, accountBalance100.getBalance());
+		accountBalance100.deposit(EUR_50);
+		assertEquals(new MoneyAmount(new BigDecimal(150)), accountBalance100.getBalance());
 	}
 	
 	@Test (expected = IllegalAmountException.class)
 	public void deposit_UnacceptableAmount() throws Exception
 	{
-		accountBalance0.deposit(-6);
+		accountBalance0.deposit(EUR_M1000);
 	}
 	
 	@Test
 	public void canAcceptForWithdraw_TrueCase()
 	{
-		assertTrue(accountBalance100.canAcceptForWithdraw(50));
+		assertTrue(accountBalance100.canAcceptForWithdraw(EUR_50));
+	}
+	
+	@Test
+	public void canAcceptForWithdraw_NonEffectiveAmount()
+	{
+		assertFalse(accountBalance100.canAcceptForWithdraw(null));
 	}
 	
 	@Test
 	public void canAcceptForWithdraw__NegativeAmount()
 	{
-		assertFalse(accountBalance100.canAcceptForWithdraw(-200));
+		assertFalse(accountBalance0.canAcceptForWithdraw(EUR_M1000));
+	}
+	
+	@Test
+	public void canAcceptForWithdraw_ZeroAmount()
+	{
+		assertFalse(accountBalance100.canAcceptForWithdraw(MoneyAmount.EUR_0));
 	}
 	
 	@Test
 	public void canAcceptForWithdraw_BlockedAccount()
 	{
 		accountBalance100.block();
-		assertFalse(accountBalance100.canAcceptForWithdraw(50));
-	}
-	
-	@Test
-	public void canAcceptForWithdraw_LongOverflow()
-	{
-		BankAccount theAccount = new BankAccount(123, -100, -1000, false);
-		assertFalse(theAccount.canAcceptForWithdraw(Long.MAX_VALUE));
-		theAccount.terminate();
+		assertFalse(accountBalance100.canAcceptForWithdraw(EUR_50));
 	}
 	
 	@Test
 	public void canAcceptForWithdraw_ValueBelowCreditLimit()
 	{
-		accountBalance0.setCreditLimit(-100);
-		assertFalse(accountBalance0.canAcceptForWithdraw(101));
+		accountBalance0.setCreditLimit(EUR_M1000);
+		assertFalse(accountBalance0.canAcceptForWithdraw(new MoneyAmount(new BigDecimal(1001))));
 	}
 	
 	@Test
 	public void withdraw_LegalCase()
 	{
-		accountBalance100.withdraw(50);
-		assertEquals(50L, accountBalance100.getBalance());
+		accountBalance100.withdraw(EUR_50);
+		assertEquals(EUR_50, accountBalance100.getBalance());
 	}
 	
 	@Test (expected = IllegalAmountException.class)
 	public void withdraw_UnacceptableAmount() throws Exception
 	{
-		accountBalance0.withdraw(-6);
+		accountBalance0.withdraw(null);
 	}
 	
 	@Test
 	public void transferTo_LegalCase()
 	{
-		accountBalance100.transferTo(50, accountBalance500);
-		assertEquals(50L, accountBalance100.getBalance());
-		assertEquals(550L, accountBalance500.getBalance());
+		accountBalance100.transferTo(EUR_50, accountBalance500);
+		assertEquals(EUR_50, accountBalance100.getBalance());
+		assertEquals(new MoneyAmount(new BigDecimal(550)), accountBalance500.getBalance());
 	}
 	
 	@Test (expected = IllegalArgumentException.class)
 	public void transferTo_NonEffectiveDestination() throws Exception
 	{
-		accountBalance100.transferTo(50, null);
+		accountBalance100.transferTo(EUR_50, null);
 	}
 	
 	@Test (expected = IllegalArgumentException.class)
 	public void transferTo_SameDestination() throws Exception
 	{
-		accountBalance100.transferTo(50, accountBalance100);
+		accountBalance100.transferTo(EUR_50, accountBalance100);
 	}
 	
 	@Test (expected = IllegalAmountException.class)
@@ -380,30 +400,14 @@ public class BankAccountTest {
 	{
 		try
 		{
-			accountBalance0.setCreditLimit(-50);
-			accountBalance0.transferTo(100, accountBalance100);
+			accountBalance0.setCreditLimit(EUR_M1000);
+			accountBalance100.transferTo(new MoneyAmount(new BigDecimal(1500)), accountBalance500);
 			fail(); // If we reach this piece of code, the test will automatically fail. We expect an exception to be thrown in this try part.
 		}
 		catch (IllegalAmountException exc)
 		{
-			assertEquals(100, accountBalance100.getBalance());
-			assertEquals(0, accountBalance0.getBalance());
-			throw exc;
-		}
-	}
-	
-	@Test (expected = IllegalAmountException.class)
-	public void transferTo_NonDepositableAmount() throws Exception
-	{
-		try
-		{
-			accountBalance100.transferTo(50, accountBalanceMAX);
-			fail();
-		}
-		catch (IllegalAmountException exc)
-		{
-			assertEquals(100, accountBalance100.getBalance());
-			assertEquals(Long.MAX_VALUE, accountBalanceMAX.getBalance());
+			assertEquals(EUR_100, accountBalance100.getBalance());
+			assertEquals(new MoneyAmount(new BigDecimal(500)), accountBalance500.getBalance());
 			throw exc;
 		}
 	}
@@ -427,5 +431,19 @@ public class BankAccountTest {
 	{
 		accountBalance0.unblock();
 		assertFalse(accountBalance0.isBlocked());
+	}
+	
+	@Test
+	public void toString_SingleCase()
+	{
+		String result = accountBalance100.toString();
+		assertTrue(result.contains("Bank Account"));
+		assertTrue(result.contains(String.valueOf(accountBalance100.getNumber())));
+	}
+	
+	@Test (expected = CloneNotSupportedException.class)
+	public void clone_SingleCase() throws Exception
+	{
+		accountBalance0.clone();
 	}
 }

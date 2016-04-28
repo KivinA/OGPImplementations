@@ -8,8 +8,8 @@ public class IllegalAmountExceptionTest {
 	public void constructor_SingleCase()
 	{
 		BankAccount theAccount = new BankAccount(222);
-		IllegalAmountException exception = new IllegalAmountException(1000L, theAccount);
-		assertEquals(1000, exception.getAmount());
+		IllegalAmountException exception = new IllegalAmountException(MoneyAmount.EUR_1, theAccount);
+		assertEquals(MoneyAmount.EUR_1, exception.getAmount());
 		assertSame(theAccount, exception.getAccount());
 		assertNull(exception.getMessage());
 		assertNull(exception.getCause());

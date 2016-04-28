@@ -82,7 +82,7 @@ class BankAccount {
 	 */
 	public BankAccount(int number)
 	{
-		this(number, new MoneyAmount(new BigDecimal(1000)), MoneyAmount.EUR_0, false);
+		this(number, new MoneyAmount(new BigDecimal(-1000)), MoneyAmount.EUR_0, false);
 	}
 	
 	/**
@@ -416,7 +416,7 @@ class BankAccount {
 	 */
 	public static boolean isPossibleCreditLimit(MoneyAmount creditLimit)
 	{
-		return (creditLimit != null) && (creditLimit.signum() <= 0);
+		return ((creditLimit != null) && (creditLimit.signum() <= 0));
 	}
 	
 	/**
@@ -523,7 +523,7 @@ class BankAccount {
 	@Override
 	public String toString()
 	{
-		return "Bank account\n" + " number: " + getNumber() + "\n";
+		return "Bank Account\n" + " number: " + getNumber() + "\n";
 	}
 	
 	/**
