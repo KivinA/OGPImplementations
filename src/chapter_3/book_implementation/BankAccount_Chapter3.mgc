@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassDiagram>
+    <Class
+        name="chapter_3.book_implementation.IllegalAmountExceptionTest"
+        x="245" y="580">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Communication destinationClassName="chapter_3.book_implementation.BankAccount"/>
+    </Class>
+    <Class name="chapter_3.book_implementation.AllTests" x="550" y="13">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+    </Class>
+    <Class name="chapter_3.book_implementation.BankAccountTest" x="877" y="-16">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Association
+            destinationClassName="chapter_3.book_implementation.BankAccount"
+            endpointName="accountBalance0" kind="Simple">
+            <Point x="290" y="268"/>
+        </Association>
+        <Association
+            destinationClassName="chapter_3.book_implementation.BankAccount"
+            endpointName="accountBalance100" kind="Simple">
+            <Point x="875" y="149"/>
+        </Association>
+        <Communication destinationClassName="chapter_3.book_implementation.BankAccount"/>
+    </Class>
+    <Class name="chapter_3.book_implementation.IllegalAmountException"
+        x="275" y="486">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Association
+            destinationClassName="chapter_3.book_implementation.BankAccount"
+            endpointName="account" kind="Simple"/>
+    </Class>
+    <Class
+        name="chapter_3.book_implementation.IllegalNumberExceptionTest"
+        x="38" y="584">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Communication destinationClassName="chapter_3.book_implementation.BankAccount"/>
+    </Class>
+    <Class name="chapter_3.book_implementation.IllegalNumberException"
+        x="87" y="482">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Association
+            destinationClassName="chapter_3.book_implementation.BankAccount"
+            endpointName="account" kind="Simple"/>
+    </Class>
+    <Class name="chapter_3.book_implementation.BankAccount" x="22" y="22">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+    </Class>
+</ClassDiagram>

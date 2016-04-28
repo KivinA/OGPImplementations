@@ -1,5 +1,6 @@
-package chapter_3.book_implementation;
+package chapter_4.book_implementation;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 import be.kuleuven.cs.som.annotate.*;
@@ -8,16 +9,14 @@ import be.kuleuven.cs.som.annotate.*;
  * A class of Bank Account involving a bank code, a number, a credit limit, a balance limit, a balance and a blocking facility.
  * 
  * @author 	Kevin Algoet & Eric Steegmans
- * @version	3.0
+ * @version	4.0
  *
  * @invar	The bank code that applies to all Bank Accounts must be a valid bank code.
  * 			| isValidBankCode(getBankCode())
  * @invar	Each Bank Account can have its number as its number.
  * 			| canHaveAsNumber(getNumber())
- * @invar	Each Bank ACcount can have its credit limit as its credit limit.
+ * @invar	Each Bank Account can have its credit limit as its credit limit.
  * 			| canHaveAsCreditLimit(getCreditLimit())
- * @invar	The balance limit that applies to all Bank Accounts must be a valid balance limit.
- * 			| isValidBalanceLimit(getBalanceLimit())
  * @invar	Each Bank Account can have its balance as its balance.
  * 			| canHaveAsBalance(getBalance())
  * @note	Based on the code found in the book Object Oriented Programming with Java by Eric Steegmans.
@@ -25,29 +24,35 @@ import be.kuleuven.cs.som.annotate.*;
 class BankAccount {
 	
 	/**
-	 * Initialize this new Bank Account with given number, given balance and a given blocked state.
+	 * Initialize this new Bank Account with given number, given credit limit, given balance and a given blocked state.
 	 * 
 	 * @param 	number
 	 * 			The number for this new Bank Account.
+	 * @param	creditLimit
+	 * 			The credit limit for this new Bank Account.
 	 * @param 	balance
 	 * 			The balance for this new Bank Account.
 	 * @param 	isBlocked
 	 * 			The blocked state for this new Bank Account.
 	 * @post	The new number of this new Bank Account is equal to the given number.
 	 * 			| new.getNumber() == number
-	 * @post	The new balance of this new Bank Account is equal to the given initial balance.
-	 * 			| new.getBalance() == balance
+	 * @post	The new credit limit of this new Bank Account is equal to the given credit limit.
+	 * 			| new.getrCreditLimit() == creditLimit
+	 * @post	The new balance of this new Bank Account is equal to the given balance.
+	 * 			| new.getBalance().equals(balance)
 	 * @post	The new blocked state of this new Bank Account is equal to the given flag.
 	 * 			| new.isBlocked() == isBlocked
-	 * @throws	IllegalNumberException(number, this)
-	 * 			This new Bank Account cannot have the given number as its number.
-	 * 			| !canHaveAsNumber(number)
+	 * @throws	IllegalNumberException(credit, this)
+	 * 			The given credit limit is not a valid credit limit for any Bank Account, or it doesn't match with the given balance.
+	 * 			| ( (!isPossibleCreditLimit(creditLimit)) || (!matchesBalanceCreditLimit(balance, creditLimit)) )
 	 * @throws	IllegalAmountException(balance, this)
-	 * 			The given initial balance is not a valid balance for any Bank Account.
-	 * 			| !isValidBalance(balance)
+	 * 			The given initial balance is not a valid balance for any Bank Account or it doesn't match with the given
+	 * 			credit limit.
+	 * 			| ( (!isPossibleBalance(balance)) || (!matchesBalanceCreditLimit(balance, creditLimit)) )
 	 */
 	@Raw
-	public BankAccount(int number, long balance, long creditLimit, boolean isBlocked) throws IllegalAmountException, IllegalNumberException
+	public BankAccount(int number, MoneyAmount creditLimit, MoneyAmount balance, boolean isBlocked) 
+			throws IllegalAmountException, IllegalNumberException
 	{
 		if (!canHaveAsNumber(number))
 			throw new IllegalNumberException(number, this);
@@ -66,17 +71,18 @@ class BankAccount {
 	}
 	
 	/**
-	 * Initialize this new Bank Account as an unblocked account with given number and zero balance.
+	 * Initialize this new Bank Account as an unblocked account with given number with a credit limit of -1000.00 EUR and 
+	 * with a balance of 0.00 EUR.
 	 * 
 	 * @param 	number
 	 * 			The number for this new Bank Account.
-	 * @effect	This new Bank Account is initialized with the given number as its number, zero as its initial balance
-	 * 			and false as its initial blocked state.
-	 * 			| this(number, 0L, false)
+	 * @effect	This new Bank Account is initialized with the given number as its number, with -1000.00 EUR as its credit limit,
+	 * 			with 0 EUR as its balance, and false as its initial blocked state.
+	 * 			| this(number, new {@link MoneyAmount}(new BigDecimal(1000)), {@link MoneyAmount}.EUR_0, false)
 	 */
 	public BankAccount(int number)
 	{
-		this(number, 0, -1000L, false);
+		this(number, new MoneyAmount(new BigDecimal(-1000)), MoneyAmount.EUR_0, false);
 	}
 	
 	/**
@@ -163,7 +169,7 @@ class BankAccount {
 	 * @note	The balance of a Bank Account expresses the amount of money available on that account.
 	 */
 	@Basic @Raw
-	public long getBalance()
+	public MoneyAmount getBalance()
 	{
 		return this.balance;
 	}
@@ -174,11 +180,18 @@ class BankAccount {
 	 * @param 	amount
 	 * 			The amount of money to compare with.
 	 * @return	True if and only if the balance of this Bank Account is greater than the given amount.
-	 * 			| result == (this.getBalance() > amount)
+	 * 			| result == (this.getBalance().compareTo(amount) > 0)
+	 * @throws	IllegalArgumentException
+	 * 			The given amount isn't effective or its currency differs from the currency of this Bank Account.
+	 * 			| ( (amount == null)  || (amount.getCurrency() != this.getBalance().getCurrency()) )
 	 */
-	public boolean hasHigherBalanceThan(long amount)
+	public boolean hasHigherBalanceThan(MoneyAmount amount) throws IllegalArgumentException
 	{
-		return getBalance() > amount;
+		if (amount == null)
+			throw new IllegalArgumentException("Non-effective amount!");
+		if (amount.getCurrency() != getBalance().getCurrency())
+			throw new IllegalArgumentException("Different Currencies!");
+		return getBalance().compareTo(amount) > 0;
 	}
 	
 	/**
@@ -191,6 +204,8 @@ class BankAccount {
 	 * @throws	IllegalArgumentException
 	 * 			The other Bank Account isn't effective.
 	 * 			| other == null
+	 * @throws	IllegalArgumentException
+	 * 			A condition was violated or an error was thrown.
 	 */
 	public boolean hasHigherBalanceThan(BankAccount other) throws IllegalArgumentException
 	{
@@ -204,13 +219,12 @@ class BankAccount {
 	 * 
 	 * @param 	amount
 	 * 			The amount to be checked.
-	 * @return	True if and only if the given amount if positive, if the balance of this Bank Account incremented with the given amount
-	 * 			is a valid balance for any Bank Account, and if that sum doesn't cause an overflow.
-	 * 			| result == ( (amount > 0) && canHaveAsBalance(getBalance() + amount) && (getBalance() <= Long.MAX_VALUE - amount) )  
+	 * @return	True if and only if the given amount is effective and positive.
+	 * 			| result == ( (amount != null) && (amount.signum() > 0) )  
 	 */
-	public boolean canAcceptForDeposit(long amount)
+	public boolean canAcceptForDeposit(MoneyAmount amount)
 	{
-		return ((amount > 0) && canHaveAsBalance(getBalance() + amount) && (getBalance() <= Long.MAX_VALUE - amount));
+		return ((amount != null) && (amount.signum() > 0));
 	}
 	
 	/**
@@ -220,21 +234,21 @@ class BankAccount {
 	 * 			The amount of money to be deposited.
 	 * @post	The new balance of this Bank Account is equal to the old balance of this Bank Account incremented with the given
 	 * 			amount of money.
-	 * 			| new.getBalance() == this.getBalance() + amount
-	 * @throws	IllegalAmountException
+	 * 			| new.getBalance() == this.getBalance().add(amount)
+	 * @throws	IllegalAmountException(amount, this)
 	 * 			This Bank Account cannot accept the given amount for deposit.
 	 * 			| !canAcceptForDeposit(amount)
 	 * 
 	 * @note	Even though we have specified a post condition, it would be better to specify an effect clause,
 	 * 			because we actually invoke another method to change the balance of this Bank Account. See below for effect clause:
 	 * @effect	The new balance of this Bank Account is set to the old balance of this Bank Account incremented with the given amount of money.
-	 * 			| this.setBalance(getBalance() + amount)
+	 * 			| this.setBalance(getBalance().add(amount))
 	 */
-	public void deposit(long amount) throws IllegalAmountException
+	public void deposit(MoneyAmount amount) throws IllegalAmountException
 	{
 		if (!canAcceptForDeposit(amount))
 			throw new IllegalAmountException(amount, this);
-		setBalance(getBalance() + amount);
+		setBalance(getBalance().add(amount));
 	}
 	
 	/**
@@ -242,15 +256,13 @@ class BankAccount {
 	 * 
 	 * @param 	amount
 	 * 			The amount to be checked.
-	 * @return	True if and only if the given amount is positive, if this Bank Account isn't blocked, if the 
-	 * 			balance of this Bank Account decremented with the given amount is a valid balance for any Bank Account, and if
-	 * 			that substraction doesn't cause an overflow.
-	 * 			| result == ( (amount > 0) && !isBlocked() && canHaveAsBalance(getBalance() - amount) &&
-	 * 			|		(getBalance() >= Long.MIN_VALUE + amount) )
+	 * @return	True if and only if the given amount is effective and positive, if this Bank Account isn't blocked, and if this
+	 * 			Bank Account can have its current balance decremented with the given amount as its balance.
+	 * 			| result == ( (amount != null) && (amount.signum() > 0)&& !isBlocked() && canHaveAsBalance(getBalance().subtract(amount)) )
 	 */
-	public boolean canAcceptForWithdraw(long amount)
+	public boolean canAcceptForWithdraw(MoneyAmount amount)
 	{
-		return ((amount > 0) && !isBlocked() && canHaveAsBalance(getBalance() - amount) && (getBalance() >= Long.MIN_VALUE + amount));
+		return ((amount != null) && (amount.signum() > 0)&& !isBlocked() && canHaveAsBalance(getBalance().subtract(amount)));
 		
 	}
 	
@@ -260,7 +272,7 @@ class BankAccount {
 	 * @param 	amount
 	 * 			The amount of money to be withdrawn
 	 * @post	The new balance of this Bank Account is equal to the old balance of this Bank Account decremented with the given amount of money.
-	 * 			| new.getBalance() == this.getBalance() - amount
+	 * 			| new.getBalance() == this.getBalance().subtract(amount)
 	 * @throws	IllegalAmountException
 	 * 			This Bank Account cannot accept the given amount for withdraw.
 	 * 			| !canAcceptForWithdraw(amount)
@@ -268,13 +280,13 @@ class BankAccount {
 	 * @note	Even though we have specified a post condition, it would be better to specify an effect clause,
 	 * 			because we actually invoke another method to change the balance of this Bank Account. See below for effect clause:
 	 * @effect	The new balance of this Bank Account is set to the old balance of this Bank Account decremented with the given amount of money.
-	 * 			| this.setBalance(getBalance() - amount)
+	 * 			| this.setBalance(getBalance().subtract(amount))
 	 */
-	public void withdraw(long amount) throws IllegalAmountException
+	public void withdraw(MoneyAmount amount) throws IllegalAmountException
 	{
 		if (!canAcceptForWithdraw(amount))
 			throw new IllegalAmountException(amount, this);
-		setBalance(getBalance() - amount); 
+		setBalance(getBalance().subtract(amount)); 
 	}
 	
 	/**
@@ -292,7 +304,7 @@ class BankAccount {
 	 * @throws	IllegalAmountException
 	 * 			A condition was violated or an exception was thrown.
 	 */
-	public void transferTo(long amount, BankAccount destination) throws IllegalAmountException, IllegalArgumentException
+	public void transferTo(MoneyAmount amount, BankAccount destination) throws IllegalAmountException, IllegalArgumentException
 	{
 		boolean partialTransfer = false;
 		try 
@@ -311,38 +323,17 @@ class BankAccount {
 		}
 	}
 	
-/*	 ALTERNATIVE IMPLEMENTATION    
-	    public void transferTo(long amount, BankAccount destination)
-	            throws IllegalArgumentException, IllegalAmountException {
-	        try {
-	            if ((destination == null) || (destination == this))
-	                throw new IllegalArgumentException("Illegal destination!");
-	            withdraw(amount);
-	            destination.deposit(amount);
-	        }
-	        catch (IllegalAmountException exc) {
-	            if (exc.getStackTrace()[0].getMethodName().equals("deposit"))
-	                deposit(amount);
-	            throw exc;
-	        }
-	        catch (Error exc) {
-	            if (exc.getStackTrace()[0].getMethodName().equals("deposit"))
-	                deposit(amount);
-	            throw exc;
-	        }
-	    }*/
-	
 	/**
 	 * Check whether the given balance is a possible balance for any Bank Account.
 	 * 
 	 * @param 	balance
 	 * 			The balance to check.
-	 * @return	True if and only if the given balance isn't above the balance limit that applies to all Bank Accounts.
-	 * 			| result == (balance <= getBalanceLimit())
+	 * @return	True if and only if the given balance is effective.
+	 * 			| result == (balance != null)
 	 */
-	public static boolean isPossibleBalance(long balance)
+	public static boolean isPossibleBalance(MoneyAmount balance)
 	{
-		return balance <= getBalanceLimit();
+		return balance != null;
 	}
 	
 	/**
@@ -354,7 +345,8 @@ class BankAccount {
 	 * 			matches with the credit limit of this account.
 	 * 			| result == (isPossibleBalance(balance) && matchesBalanceCreditLimit(balance, getCreditLimit()))
 	 */
-	public boolean canHaveAsBalance(long balance)
+	@Raw
+	public boolean canHaveAsBalance(MoneyAmount balance)
 	{
 		return isPossibleBalance(balance) && matchesBalanceCreditLimit(balance, getCreditLimit());
 	}
@@ -366,12 +358,14 @@ class BankAccount {
 	 * 			The balance to check.
 	 * @param 	creditLimit
 	 * 			The credit limit to check.
-	 * @return	True if and only if the given balance exceeds the given credit limit.
+	 * @return	True if and only if the given balance and the given credit limit are both effective, if they use the same currency
+	 * 			and if the given balance exceeds the given credit limit.
 	 * 			| result == (balance > creditLimit)
 	 */
-	public static boolean matchesBalanceCreditLimit(long balance, long creditLimit)
+	public static boolean matchesBalanceCreditLimit(MoneyAmount balance, MoneyAmount creditLimit)
 	{
-		return balance > creditLimit;
+		return (isPossibleBalance(balance) && (creditLimit != null) && (balance.getCurrency() == creditLimit.getCurrency())
+				&& (balance.compareTo(creditLimit) > 0));
 	}
 	
 	/**
@@ -389,7 +383,7 @@ class BankAccount {
 	 * 			specify it is used in the specifications of other methods.
 	 */
 	@Raw @Model
-	private void setBalance(long balance)
+	private void setBalance(MoneyAmount balance)
 	{
 		if (!canHaveAsBalance(balance))
 			throw new IllegalAmountException(balance, this);
@@ -399,15 +393,15 @@ class BankAccount {
 	/**
 	 * Variable registering the balance of this Bank Account;
 	 */
-	private long balance = 0L;
+	private MoneyAmount balance;
 	
 	/**
-	 * Return the credit limit that applies to all Bank Accounts.
+	 * Return the credit limit for this Bank Account.
 	 * 
 	 * @note	The credit limit expresses the lowest possible value for the balance of any Bank Account.
 	 */
-	@Basic
-	public long getCreditLimit()
+	@Basic @Raw
+	public MoneyAmount getCreditLimit()
 	{
 		return creditLimit;
 	}
@@ -417,12 +411,12 @@ class BankAccount {
 	 * 
 	 * @param 	creditLimit
 	 * 			The credit limit to check.
-	 * @return	True if and only if the given credit limit isn't positive.
-	 * 			| result == (creditLimit <= 0)
+	 * @return	True if and only if the given credit limit is effective and not positive.
+	 * 			| result == ( (creditLimit != null) && (creditLimit.signum() <= 0) )
 	 */
-	public static boolean isPossibleCreditLimit(long creditLimit)
+	public static boolean isPossibleCreditLimit(MoneyAmount creditLimit)
 	{
-		return creditLimit <= 0;
+		return ((creditLimit != null) && (creditLimit.signum() <= 0));
 	}
 	
 	/**
@@ -434,7 +428,8 @@ class BankAccount {
 	 * 			credit limit matches with the balance of this Bank Account.
 	 * 			| result == ( isPossibleCreditLimit(creditLimit) && matchesBalanceCreditLimit(getBalance(), creditLimit) )
 	 */
-	public boolean canHaveAsCreditLimit(long creditLimit)
+	@Raw
+	public boolean canHaveAsCreditLimit(MoneyAmount creditLimit)
 	{
 		return isPossibleCreditLimit(creditLimit) && matchesBalanceCreditLimit(getBalance(), creditLimit);
 	}
@@ -452,7 +447,8 @@ class BankAccount {
 	 * 			This Bank Account cannot have the given credit limit as its credit limit.
 	 * 			| !canHaveAsCreditLimit(creditLimit)
 	 */
-	public void setCreditLimit(long creditLimit) throws IllegalAmountException
+	@Raw
+	public void setCreditLimit(MoneyAmount creditLimit) throws IllegalAmountException
 	{
 		if (!canHaveAsCreditLimit(creditLimit))
 			throw new IllegalAmountException(creditLimit, this);
@@ -460,38 +456,9 @@ class BankAccount {
 	}
 	
 	/**
-	 * Variable registerting the credit limit that applies to all Bank Accounts.
+	 * Variable registerting the credit limit for this Bank Account.
 	 */
-	private long creditLimit = 0L;
-	
-	/**
-	 * Return the balance limit that applies to all Bank Accounts.
-	 * 
-	 * @note	The balance limit expresses the highest possible value for the balance of any Bank Account.
-	 */
-	@Basic @Immutable
-	public static long getBalanceLimit()
-	{
-		return balanceLimit;
-	}
-	
-	/**
-	 * Check whether the given balance limit is a valid balance limit for all Bank Accounts.
-	 * 
-	 * @param 	balanceLimit
-	 * 			The balance limit to check.
-	 * @return	True if and only if the given balance limit is strict positive.
-	 * 			| result == (balanceLimit > 0)
-	 */
-	public static boolean isValidBalanceLimit(long balanceLimit)
-	{
-		return balanceLimit > 0;
-	}
-	
-	/**
-	 * Variable registering the balance limit that applies to all Bank Accounts.
-	 */
-	private static final long balanceLimit = Long.MAX_VALUE;
+	private MoneyAmount creditLimit = MoneyAmount.EUR_0;
 	
 	/**
 	 * Check whether this Bank Account is blocked.
@@ -544,4 +511,31 @@ class BankAccount {
 	 * Variable registering the blocked state of this Bank Account.
 	 */
 	private boolean isBlocked = false;
+	
+	/**
+	 * Return a textual representation of this Bank Account.
+	 * 
+	 * @return	The resulting string mentions "Bank Account" as the name of the class of this Bank Account.
+	 * 			| result.contains("Bank Account")
+	 * @return	The resulting string contains the number of this Bank Account.
+	 * 			| result.contains(String.valueOf(getNumber())
+	 */
+	@Override
+	public String toString()
+	{
+		return "Bank Account\n" + " number: " + getNumber() + "\n";
+	}
+	
+	/**
+	 * Return a clone of this Bank Account.
+	 * 
+	 * @throws	CloneNotSupportedException
+	 * 			Always.
+	 * 			| true
+	 */
+	@Override
+	protected Object clone() throws CloneNotSupportedException
+	{
+		throw new CloneNotSupportedException("Bank Accounts cannot be cloned.");
+	}
 }
