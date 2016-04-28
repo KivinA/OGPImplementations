@@ -8,7 +8,7 @@ import be.kuleuven.cs.som.annotate.*;
  * A class of Bank Account involving a bank code, a number, a credit limit, a balance limit, a balance and a blocking facility.
  * 
  * @author 	Kevin Algoet & Eric Steegmans
- * @version	2.0
+ * @version	4.0
  *
  * @invar	The bank code that applies to all Bank Accounts must be a valid bank code.
  * 			| isValidBankCode(getBankCode())

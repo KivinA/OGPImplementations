@@ -241,13 +241,13 @@ class MoneyAmount implements Comparable<MoneyAmount>{
 	 * 			The other Money Amount isn't effective.
 	 * 			| other == null
 	 */
-	public MoneyAmount substract(MoneyAmount other) throws IllegalArgumentException
+	public MoneyAmount subtract(MoneyAmount other) throws IllegalArgumentException
 	{
 		if (other == null)
 			throw new IllegalArgumentException("Non-effective Money Amount");
 		if (getCurrency() == other.getCurrency())
 			return new MoneyAmount(getNumeral().subtract(other.getNumeral()), getCurrency());
-		return substract(other.toCurrency(getCurrency()));
+		return subtract(other.toCurrency(getCurrency()));
 	}
 	
 	/**
