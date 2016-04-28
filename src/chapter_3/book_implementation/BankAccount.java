@@ -14,12 +14,12 @@ import be.kuleuven.cs.som.annotate.*;
  * 			| isValidBankCode(getBankCode())
  * @invar	Each Bank Account can have its number as its number.
  * 			| canHaveAsNumber(getNumber())
- * @invar	The credit limit that applies to all Bank Accounts must be a vamlid credit limit.
- * 			| isValidCreditLimit(getCreditLimit())
+ * @invar	Each Bank ACcount can have its credit limit as its credit limit.
+ * 			| canHaveAsCreditLimit(getCreditLimit())
  * @invar	The balance limit that applies to all Bank Accounts must be a valid balance limit.
  * 			| isValidBalanceLimit(getBalanceLimit())
- * @invar	The balance of each Bank Account must be a valid balance for any Bank Account.
- * 			| isValidBalance(getBalance())
+ * @invar	Each Bank Account can have its balance as its balance.
+ * 			| canHaveAsBalance(getBalance())
  * @note	Based on the code found in the book Object Oriented Programming with Java by Eric Steegmans.
  */
 class BankAccount {
@@ -33,8 +33,6 @@ class BankAccount {
 	 * 			The balance for this new Bank Account.
 	 * @param 	isBlocked
 	 * 			The blocked state for this new Bank Account.
-	 * @param	tokens
-	 * 			The series of tokens for this new Bank Account.
 	 * @post	The new number of this new Bank Account is equal to the given number.
 	 * 			| new.getNumber() == number
 	 * @post	The new balance of this new Bank Account is equal to the given initial balance.

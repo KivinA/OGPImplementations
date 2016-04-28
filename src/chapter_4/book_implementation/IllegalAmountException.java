@@ -34,7 +34,7 @@ public class IllegalAmountException extends RuntimeException {
 	 * 			and no cause.
 	 * 			| super()
 	 */
-	public IllegalAmountException(long amount, BankAccount account)
+	public IllegalAmountException(MoneyAmount amount, BankAccount account)
 	{
 		this.amount = amount;
 		this.account = account;
@@ -44,7 +44,7 @@ public class IllegalAmountException extends RuntimeException {
 	 * Return the amount of this Illegal Amount Exception.
 	 */
 	@Basic @Raw @Immutable
-	public long getAmount()
+	public MoneyAmount getAmount()
 	{
 		return amount;
 	}
@@ -52,7 +52,7 @@ public class IllegalAmountException extends RuntimeException {
 	/**
 	 * Variable registering the amount of this Illegal Amount Exception.
 	 */
-	private final long amount;
+	private final MoneyAmount amount;
 	
 	/**
 	 * Return the Bank account of this Illegal Amount Exception.

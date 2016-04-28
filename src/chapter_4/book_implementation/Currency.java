@@ -15,6 +15,7 @@ import be.kuleuven.cs.som.annotate.*;
  * @note	In its current form, the class only supports the Euro, the USD and the Japanase Yen.
  * @note	Based on the code found in the book Object Oriented Programming with Java by Eric Steegmans.
  */
+@Value
 enum Currency {
 	EUR('€'), USD('$'), JPY('\u00a5');
 	
