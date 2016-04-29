@@ -11,7 +11,7 @@ import chapter_5.book_implementation.exceptions.*;
  * A class of Bank Account involving a bank code, a number, a credit limit, a balance limit, a balance and a blocking facility.
  * 
  * @author 	Kevin Algoet & Eric Steegmans
- * @version	4.0
+ * @version	5.0
  *
  * @invar	The bank code that applies to all Bank Accounts must be a valid bank code.
  * 			| isValidBankCode(getBankCode())
