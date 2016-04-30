@@ -8,6 +8,14 @@ import org.junit.Test;
 import chapter_5.book_implementation.banking.*;
 import chapter_5.book_implementation.state.Person;
 
+/**
+ * A class collecting tests for {@link IllegalNumberException}.
+ * 
+ * @author 	Kevin Algoet & Eric Steegmans
+ * @version	5.0
+ * 
+ * @note	Based on the code found in the book Object Oriented Programming with Java by Eric Steegmans.
+ */
 public class IllegalNumberExceptionTest {
 	
 	private static Person someAdult;

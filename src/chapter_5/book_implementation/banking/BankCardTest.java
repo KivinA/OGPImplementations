@@ -10,6 +10,14 @@ import chapter_5.book_implementation.exceptions.*;
 import chapter_5.book_implementation.money.MoneyAmount;
 import chapter_5.book_implementation.state.Person;
 
+/**
+ * A class collecting tests for {@link BankCard}.
+ * 
+ * @author 	Kevin Algoet & Eric Steegmans
+ * @version	5.0
+ *
+ * @note	Based on the code found in the book Object Oriented Programming with Java by Eric Steegmans.
+ */
 public class BankCardTest {
 	
 	private BankCard someCard, terminateCard;

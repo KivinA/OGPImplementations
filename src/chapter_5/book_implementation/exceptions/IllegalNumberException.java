@@ -7,7 +7,7 @@ import chapter_5.book_implementation.banking.*;
  * A class of exceptions signaling illegal numbers for Bank Accounts.
  * 
  * @author 	Kevin Algoet & Eric Steegmans
- * @version	3.0
+ * @version	5.0
  * 
  * @note	Each Illegal Number Exception involves the illegal number and the Bank Account.
  * @note	Based on the code found in the book Object Oriented Programming with Java by Eric Steegmans.

@@ -9,6 +9,14 @@ import chapter_5.book_implementation.banking.BankAccount;
 import chapter_5.book_implementation.banking.BankCard;
 import chapter_5.book_implementation.state.Person;
 
+/**
+ * A class collecting tests for {@link IllegalPinCodeException}.
+ * 
+ * @author 	Kevin Algoet & Eric Steegmans
+ * @version	5.0
+ * 
+ * @note	Based on the code found in the book Object Oriented Programming with Java by Eric Steegmans.
+ */
 public class IllegalPinCodeExceptionTest {
 	
 	private static Person someAdult;
