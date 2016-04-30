@@ -6,9 +6,11 @@ import java.util.Set;
 import be.kuleuven.cs.som.annotate.*;
 import chapter_5.book_implementation.money.*;
 import chapter_5.book_implementation.exceptions.*;
+import chapter_5.book_implementation.state.*;
 
 /**
- * A class of Bank Account involving a bank code, a number, a credit limit, a balance limit, a balance and a blocking facility.
+ * A class of Bank Account involving a bank code, a number, a holder, a credit limit, a balance, a blocking facility 
+ * and a {@link BankCard}.
  * 
  * @author 	Kevin Algoet & Eric Steegmans
  * @version	5.0
@@ -21,6 +23,8 @@ import chapter_5.book_implementation.exceptions.*;
  * 			| canHaveAsCreditLimit(getCreditLimit())
  * @invar	Each Bank Account can have its balance as its balance.
  * 			| canHaveAsBalance(getBalance())
+ * @invar	Each Bank Account must have a proper {@link BankCard} attached to it.
+ * 			| hasProperBankCard()
  * @note	Based on the code found in the book Object Oriented Programming with Java by Eric Steegmans.
  */
 public class BankAccount {
@@ -30,6 +34,8 @@ public class BankAccount {
 	 * 
 	 * @param 	number
 	 * 			The number for this new Bank Account.
+	 * @param	holder
+	 * 			The holder for this new Bank Account.
 	 * @param	creditLimit
 	 * 			The credit limit for this new Bank Account.
 	 * @param 	balance
@@ -38,12 +44,16 @@ public class BankAccount {
 	 * 			The blocked state for this new Bank Account.
 	 * @post	The new number of this new Bank Account is equal to the given number.
 	 * 			| new.getNumber() == number
+	 * @effect	The holder for this new Bank Account is set to the given holder.
+	 * 			| this.setHolder(holder)
 	 * @post	The new credit limit of this new Bank Account is equal to the given credit limit.
 	 * 			| new.getrCreditLimit() == creditLimit
-	 * @post	The new balance of this new Bank Account is equal to the given balance.
-	 * 			| new.getBalance().equals(balance)
-	 * @post	The new blocked state of this new Bank Account is equal to the given flag.
-	 * 			| new.isBlocked() == isBlocked
+	 * @effect	The balance for this new Bank Account is set to the given balance.
+	 * 			| this.setBalance(balance)
+	 * @effect	The blocked state for this new Bank Account is set to the given blocked state.
+	 * 			| this.setBlocked(isBlocked)
+	 * @post	The list of all account numbers has this number as one of its numbers.
+	 * 			| allAccountNumbers.add(number)
 	 * @throws	IllegalNumberException(credit, this)
 	 * 			The given credit limit is not a valid credit limit for any Bank Account, or it doesn't match with the given balance.
 	 * 			| ( (!isPossibleCreditLimit(creditLimit)) || (!matchesBalanceCreditLimit(balance, creditLimit)) )
@@ -51,10 +61,12 @@ public class BankAccount {
 	 * 			The given initial balance is not a valid balance for any Bank Account or it doesn't match with the given
 	 * 			credit limit.
 	 * 			| ( (!isPossibleBalance(balance)) || (!matchesBalanceCreditLimit(balance, creditLimit)) )
+	 * @throws	IllegalHolderException
+	 * 			A condition was violated or an error was thrown.
 	 */
 	@Raw
-	public BankAccount(int number, MoneyAmount creditLimit, MoneyAmount balance, boolean isBlocked) 
-			throws IllegalAmountException, IllegalNumberException
+	public BankAccount(int number, Person holder, MoneyAmount creditLimit, MoneyAmount balance, boolean isBlocked) 
+			throws IllegalAmountException, IllegalNumberException, IllegalHolderException
 	{
 		if (!canHaveAsNumber(number))
 			throw new IllegalNumberException(number, this);
@@ -69,6 +81,7 @@ public class BankAccount {
 		this.creditLimit = creditLimit;
 		setBalance(balance);
 		setBlocked(isBlocked);
+		setHolder(holder);
 		allAccountNumbers.add(number);
 	}
 	
@@ -78,13 +91,15 @@ public class BankAccount {
 	 * 
 	 * @param 	number
 	 * 			The number for this new Bank Account.
+	 * @param	holder
+	 * 			The holder for this new Bank Account.
 	 * @effect	This new Bank Account is initialized with the given number as its number, with -1000.00 EUR as its credit limit,
 	 * 			with 0 EUR as its balance, and false as its initial blocked state.
 	 * 			| this(number, new {@link MoneyAmount}(new BigDecimal(1000)), {@link MoneyAmount}.EUR_0, false)
 	 */
-	public BankAccount(int number)
+	public BankAccount(int number, Person holder)
 	{
-		this(number, new MoneyAmount(new BigDecimal(-1000)), MoneyAmount.EUR_0, false);
+		this(number, holder, new MoneyAmount(new BigDecimal(-1000)), MoneyAmount.EUR_0, false);
 	}
 	
 	/**
@@ -95,8 +110,39 @@ public class BankAccount {
 	 */
 	public void terminate()
 	{
+		if (hasBankCard())
+			getBankCard().terminate();
+		setTerminated(true);
 		allAccountNumbers.remove(this.getNumber());
 	}
+	
+	/**
+	 * Check whether this Bank Account is terminated.
+	 */
+	@Basic @Raw
+	public boolean isTerminated()
+	{
+		return this.isTerminated;
+	}
+	
+	/**
+	 * Set the terminated state of this Bank Account to the given flag.
+	 * 
+	 * @param 	flag
+	 * 			The new terminated state for this Bank Account.
+	 * @post	The new terminated state for this Bank Account is equal to the given flag.
+	 * 			| new.isTerminated() == flag
+	 */
+	@Raw @Model
+	private void setTerminated(boolean flag)
+	{
+		this.isTerminated = flag;
+	}
+	
+	/**
+	 * Variable referencing whether or not this Bank Account is terminated.
+	 */
+	private boolean isTerminated = false;
 	
 	/**
 	 * Return the number of this Bank Account.
@@ -135,6 +181,51 @@ public class BankAccount {
 	 * @note	More information on sets and other data structures is given starting from chapter 5.
 	 */
 	private static final Set<Integer> allAccountNumbers = new HashSet<Integer>();
+	
+	/**
+	 * Return the holder of this Bank Account.
+	 */
+	@Basic @Raw
+	public Person getHolder()
+	{
+		return this.holder;
+	}
+	
+	/**
+	 * Check whether the given {@link Person} is a valid holder for any Bank Account.
+	 * 
+	 * @param 	person
+	 * 			The {@link Person} to check.
+	 * @return	True if and only if the given {@link Person} is an effective and adult {@link Person}.
+	 * 			| result == (person != null) && person.isAdult()
+	 */
+	public static boolean isValidHolder(Person person)
+	{
+		return (person != null) && person.isAdult();
+	}
+	
+	/**
+	 * Set the holder for this Bank Account to the given holder.
+	 * 
+	 * @param 	holder
+	 * 			The new holder for this Bank Account.
+	 * @post	The new holder for this Bank Account is the same as the given holder.
+	 * 			| new.getHolder() == holder
+	 * @throws 	IllegalHolderException
+	 * 			The given holder isn't a valid holder for any Bank Account.
+	 * 			| !isValidHolder(holder)
+	 */
+	public void setHolder(Person holder) throws IllegalHolderException
+	{
+		if (!isValidHolder(holder))
+			throw new IllegalHolderException(holder, this);
+		this.holder = holder;
+	}
+	
+	/**
+	 * Variable referencing the holder of this Bank Account.
+	 */
+	private Person holder;
 	
 	/**
 	 * Return the bank code that applies to all Bank Accounts.
@@ -513,6 +604,69 @@ public class BankAccount {
 	 * Variable registering the blocked state of this Bank Account.
 	 */
 	private boolean isBlocked = false;
+	
+	/**
+	 * Return the {@link BankCard} attached to this Bank Account.
+	 * 
+	 * @note	A null reference is returned if no card is attached.
+	 */
+	@Basic @Raw
+	public BankCard getBankCard()
+	{
+		return this.bankCard;
+	}
+	
+	/**
+	 * Check whether this Bank Account has a {@link BankCard} attached to it.
+	 * 
+	 * @return	True if and only if this Bank account references an effective {@link BankCard}.
+	 * 			| result == (getBankCard() != null)
+	 */
+	public boolean hasBankCard()
+	{
+		return getBankCard() != null;
+	}
+	
+	/**
+	 * Check whether this Bank Account has a proper {@link BankCard} attached to it.
+	 * 
+	 * @return	True if and only if this Bank account doesn't reference an effective {@link BankCard}, or if the {@link BankCard}
+	 * 			referenced by this Bank Account in turn references this Bank Account as the account to which it is attached.
+	 * 			| result == ( (getBankCard() == null) || (getBankCard().getAccount() == this) )
+	 */
+	@Raw
+	public boolean hasProperBankCard()
+	{
+		return ((getBankCard() == null) || (getBankCard().getAccount() == this));
+	}
+	
+	/**
+	 * Set the {@link BankCard} attached to this Bank Account to the given card.
+	 * 
+	 * @param 	card
+	 * 			The {@link BankCard} to be attached to this Bank Account.
+	 * @pre		If the given card is effective, it must already reference this Bank account as its Bank Account.
+	 * 			| if (card != null)
+	 * 			| 	then card.getAccount() == this
+	 * @pre		If the given card isn't effective and this Bank Account has a {@link BankCard} attached to it, that {@link BankCard}
+	 * 			may not reference this Bank Account as the account to which it is attached.
+	 * 			| if ( (card == null) && this.hasBankCard() )
+	 * 			| 	then (getBankCard().getAccount() != this)
+	 * @post	This Bank Account references the given card as the {@link BankCard} attached to it.
+	 * 			| new.getBankCard() == card
+	 */
+	@Raw
+	public void setBankCard(@Raw BankCard card)
+	{
+		assert (card == null) || (card.getAccount() == this);
+		assert ((card != null) || (!hasBankCard()) || (getBankCard().getAccount() == null));
+		this.bankCard = card;
+	}
+	
+	/**
+	 * Variable referencing the {@link BankCard} attached to this Bank Account.
+	 */
+	private BankCard bankCard;
 	
 	/**
 	 * Return a textual representation of this Bank Account.
