@@ -36,6 +36,7 @@ public class BankCard {
 	public BankCard(BankAccount account, int code)
 	{
 		transferTo(account);
+		setPinCode(code);
 	}
 	
 	/**
@@ -52,7 +53,13 @@ public class BankCard {
 	 */
 	public void terminate()
 	{
-		
+		if (!isTerminated())
+		{
+			BankAccount formerAccount = getAccount();
+			this.isTerminated = true;
+			setAccount(null);
+			formerAccount.setBankCard(null);
+		}
 	}
 	
 	/**
@@ -67,7 +74,7 @@ public class BankCard {
 	/**
 	 * Variable registerting whether this Bank Card is terminated.
 	 */
-	private boolean isTerminated;
+	private boolean isTerminated = false;
 	
 	/**
 	 * Return the {@link BankAccount} to which this Bank Card is attached.
@@ -94,8 +101,9 @@ public class BankCard {
 	{
 		if (isTerminated())
 			return account == null;
-		else
-			return ((account != null) && !account.isTerminated());
+		if (account == null)
+			return true;
+		return !account.isTerminated();
 	}
 	
 	/**
@@ -109,7 +117,7 @@ public class BankCard {
 	@Raw
 	public boolean hasProperAccount()
 	{
-		return equals(canHaveAsAccount(getAccount()) && ((getAccount() == null) || (getAccount().getBankCard() == this)));
+		return canHaveAsAccount(getAccount()) && ((getAccount() == null) || (getAccount().getBankCard() == this));
 	}
 	
 	/**
@@ -117,12 +125,16 @@ public class BankCard {
 	 * 
 	 * @param 	account
 	 * 			The {@link BankAccount} to which this Bank Card must be attached.
-	 * @post	This Bank Card is attached to the given {@link BankAccount}.
-	 * 			| new.getAccount() == account
-	 * @post	The given {@link BankAccount} has this Bank Card as its Bank Card.
-	 * 			| (new account).getBankCard() == this
-	 * @post	If this Bank Card was attached to some other {@link BankAccount}, that account no longer references
-	 * 			this Bank Card as the Bank Card attached to it.
+	 * @effect	If the given account isn't equal to the account of this Bank Card, set the account of this Bank Card
+	 * 			to the given account.
+	 * 			| if (account != this.getAccount())
+	 * 			| 	then this.setAccount(account)
+	 * @effect	If the given account isn't equal to the account of this Bank Card, set the Bank Card of the given 
+	 * 			account to this Bank Card.
+	 * 			| if (account != this.getAccount())
+	 * 			|	then (new account).setBankCard(this)
+	 * @post	If the given account isn't equal to the account of this Bank Card, and if this Bank Card was attached to some other 
+	 * 			{@link BankAccount}, that account no longer references this Bank Card as the Bank Card attached to it.
 	 * 			| if ( (getAccount() != null) && (getAccount() != account) )
 	 * 			|	then ( !(new getAccount()).hasBankCard() )
 	 * @throws 	IllegalStateException
@@ -130,8 +142,8 @@ public class BankCard {
 	 * 			| this.isTerminated()
 	 * @throws 	IllegalAccountException
 	 * 			This Bank Card cannot have the give account as the {@link BankAccount} to be attached to,
-	 * 			or the given account already has another Bank Card attached to it.
-	 * 			| ( (!canHaveAsAccount(account)) || (account.hasBankCard() && (account.getBankCard() != this)) )
+	 * 			or the given account already has another {@link BankCard} attached to it.
+	 * 			| ( (!this.canHaveAsAccount(account)) || (account.hasBankCard() && (account.getBankCard() != this)) )
 	 */
 	@Raw
 	public void transferTo(BankAccount account) throws IllegalStateException, IllegalAccountException
@@ -140,14 +152,22 @@ public class BankCard {
 			throw new IllegalStateException("Terminated card!");
 		if (!canHaveAsAccount(account))
 			throw new IllegalAccountException(account, this);
-		if (account.hasBankCard() && account.getBankCard() != this)
+		if (account.hasBankCard() && (account.getBankCard() != this))
 			throw new IllegalAccountException(account, this);
-		if (getAccount() != null)
-			getAccount().setBankCard(null);
-		setAccount(account);
-		account.setBankCard(this);
+		if (account != getAccount())
+		{
+			if (getAccount() != null)
+			{
+				BankAccount formerAccount = getAccount();
+				setAccount(account);
+				formerAccount.setBankCard(null);
+			}
+			if (getAccount() != account)
+				setAccount(account);
+			account.setBankCard(this);
+		}
 	}
-	
+
 	/**
 	 * Set the {@link BankAccount} to which this Bank Card is attached to this given {@link BankAccount}.
 	 * 
@@ -183,7 +203,7 @@ public class BankCard {
 	@Basic @Raw
 	public boolean hasAsPinCode(int code)
 	{
-		return getPinCode() == code;
+		return (getPinCode() == code);
 	}
 	
 	/**

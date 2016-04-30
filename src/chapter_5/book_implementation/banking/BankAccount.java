@@ -645,24 +645,26 @@ public class BankAccount {
 	 * 
 	 * @param 	card
 	 * 			The {@link BankCard} to be attached to this Bank Account.
-	 * @pre		If the given card is effective, it must already reference this Bank account as its Bank Account.
+	 * @pre		If this Bank Account already has a {@link BankCard}, the account to which the {@link BankCard} is attached to must be
+	 * 			a different Bank Account.
+	 * 			| if (hasBankCard())
+	 * 			|	then getBankCard().getAccount() != this
+	 * @pre		If the given card is effective, the account to which this card is attached must be this Bank Account.
 	 * 			| if (card != null)
-	 * 			| 	then card.getAccount() == this
-	 * @pre		If the given card isn't effective and this Bank Account has a {@link BankCard} attached to it, that {@link BankCard}
-	 * 			may not reference this Bank Account as the account to which it is attached.
-	 * 			| if ( (card == null) && this.hasBankCard() )
-	 * 			| 	then (getBankCard().getAccount() != this)
+	 * 			|	then card.getAccount() == this
 	 * @post	This Bank Account references the given card as the {@link BankCard} attached to it.
 	 * 			| new.getBankCard() == card
 	 */
 	@Raw
 	public void setBankCard(@Raw BankCard card)
-	{
-		assert (card == null) || (card.getAccount() == this);
-		assert ((card != null) || (!hasBankCard()) || (getBankCard().getAccount() == null));
+	{	
+		if (hasBankCard())
+			assert (getBankCard().getAccount() != this);
+		else if (card != null)
+			assert card.getAccount() == this;
 		this.bankCard = card;
 	}
-	
+	 
 	/**
 	 * Variable referencing the {@link BankCard} attached to this Bank Account.
 	 */
