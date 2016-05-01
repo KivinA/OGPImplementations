@@ -1,7 +1,9 @@
 package chapter_6.book_implementation.banking;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import be.kuleuven.cs.som.annotate.*;
 import chapter_6.book_implementation.state.*;
@@ -282,4 +284,130 @@ public class BankAccount {
 	 * 			|	( (grantee == null) || canHaveAsGrantee(grantee) )
 	 */
 	private final List<Person> grantees = new ArrayList<Person>();
+	
+	/**
+	 * Check whether this Bank Account can have the given {@link SavingsAccount} as one of the {@link SavingsAccount}s attached to it.
+	 * 
+	 * @param 	savings
+	 * 			The {@link SavingsAccount} to check.
+	 */
+	@Basic @Raw
+	public boolean hasAsSavingsAccount(SavingsAccount savings)
+	{
+		return this.savings.contains(savings);
+	}
+	
+	/**
+	 * Check whether this Bank Account can have the given {@link SavingsAccount} as one of its {@link SavingsAccount}s.
+	 * 
+	 * @param 	savings
+	 * 			The {@link SavingsAccount} to check.
+	 * @return	False if the given Savings Account is not effective.
+	 * 			Otherwise, true if and only if this Bank Account is not yet terminated or the given Savings Account is also terminated.
+	 * 			| if (savings == null)
+	 * 			|	then result == false
+	 * 			| else
+	 * 			|	result == ( (!this.isTerminated()) || (savings.isTerminated()) ) 
+	 */
+	@Raw
+	public boolean canHaveAsSavingsAccount(SavingsAccount savings)
+	{
+		return ((savings != null) && (!this.isTerminated() || savings.isTerminated()));
+	}
+	
+	/**
+	 * Check whether this Bank Account has proper {@link SavingsAccount}s attached to it.
+	 * 
+	 * @return	True if and only if this Bank Account can have each of its Savings Accounts as a Savings Account attached to it,
+	 * 			and if each of these Savings Accounts references this Bank Account as their Bank Account.
+	 * 			| result == for each savings in SavingsAccount:
+	 * 			|				( if (this.hasAsSavingsAccount(savings))
+	 * 			|					then canHaveAsSavingsAccount(savings) && savings.getBankAccount() == this )
+	 */
+	@Raw
+	public boolean hasProperSavingsAccounts()
+	{
+		return false;
+	}
+	
+	/**
+	 * Return the number of {@link SavingsAccount}s attached to this Bank Account.
+	 * 
+	 * @return	The number of Savings Accounts that are attached to this Bank Account.
+	 * 			| let i = 0
+	 * 			| in for each savings in SavingsAccount:
+	 * 			|		i = i + 1
+	 * 			| result == i
+	 */
+	public int getNbSavingsAccounts()
+	{
+		return 0;
+	}
+	
+	/**
+	 * Return a set collecting all {@link SavingsAccount}s associated with this Bank Account.
+	 * 
+	 * @return	The resulting set is effective.
+	 * 			| result != null
+	 * @return 	Each Savings Account in the resulting set is attached to this Bank Account, and vice versa.
+	 * 			| for each savings in SavingsAccount:
+	 * 			| result.contains(savings) == this.hasSavingsAccount(savings)
+	 */
+	public Set<SavingsAccount> getAllSavingsAccounts()
+	{
+		return null;
+	}
+	
+	/**
+	 * Add the given {@link SavingsAccount} to the set of {@link SavingsAccount}s attached to this Bank Account.
+	 * 
+	 * @param 	savings
+	 * 			The {@link SavingsAccount} to be added.
+	 * @post	This Bank Account has the given Savings Account as one of its Savings Accounts.
+	 * 			| new.hasAsSavingsAccount(savings)
+	 * @post	The given Savings Account references this Bank Account as the account to which it is attached.
+	 * 			| (new savings).getBankAccount() == this
+	 * @throws	IllegalArgumentException
+	 * 			This Bank Account cannot have the given Savings Account as one of its Savings Accounts.
+	 * 			| !canHaveAsSavingsAccount(savings)
+	 * @throws 	IllegalArgumentException
+	 * 			The given Savings Account is already attachged to some Bank Account.
+	 * 			| ( (savings != null) && (savings.getBankAccount() != null) )
+	 */
+	public void addAsSavingsAccount(SavingsAccount savings) throws IllegalArgumentException
+	{
+		
+	}
+	
+	/**
+	 * Remove the given {@link SavingsAccount} from the set of {@link SavingsAccount}s attached to this Bank Account.
+	 * 
+	 * @param 	savings
+	 * 			The {@link SavingsAccount} to be removed.
+	 * @post	This Bank Account doesn't have the given Savings Account as one of its Savings Accounts.
+	 * 			| !new.hasAsSavingsAccount(savings)
+	 * @post	If this Bank Account has the given Savings Account as one of its Savings Accounts, the given Savings Account
+	 * 			is no longer attached to any Bank Account.
+	 * 			| if (hasAsSavingsAcccount(savbings))
+	 * 			|	then ((new savings).getBankAccount() == null)
+	 */
+	public void removeAsSavingsAccount(SavingsAccount savings)
+	{
+		
+	}
+	
+	/**
+	 * Set collecting references to {@link SavingsAccount}s attached to this Bank Account.
+	 * 
+	 * @invar	The set of Savings Accounts is effective.
+	 * 			| savings != null
+	 * @invar	Each element in the set of Savings Accounts references a Savings Account that is an acceptable Savings
+	 * 			Account for this Bank Account.
+	 * 			| for each savins in savings:
+	 * 			|	canHaveAsSavingsAccount(savings)
+	 * @invar	Each Savings Account in the set of Savings Accounts references this Bank Account to which it is attached.
+	 * 			| for each savings in savings:
+	 * 			|	(savings.getBankAccount() == this)
+	 */
+	private final Set<SavingsAccount> savings = new HashSet<SavingsAccount>();
 }
