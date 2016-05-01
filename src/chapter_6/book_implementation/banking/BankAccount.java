@@ -72,7 +72,7 @@ public class BankAccount {
 	@Basic @Raw
 	public int getNbGrantees()
 	{
-		return 0;
+		return this.grantees.size();
 	}
 	
 	/**
@@ -87,7 +87,7 @@ public class BankAccount {
 	@Basic @Raw
 	public Person getGranteeAt(int index) throws IndexOutOfBoundsException
 	{
-		return null;
+		return grantees.get(index);
 	}
 	
 	/**
@@ -104,7 +104,7 @@ public class BankAccount {
 	@Raw
 	public int getIndexOfGrantee(Person person) throws IllegalArgumentException
 	{
-		return 0;
+		return grantees.indexOf(person);
 	}
 	
 	/**
@@ -125,7 +125,7 @@ public class BankAccount {
 	@Raw
 	public boolean canHaveAsGrantee(Person person)
 	{
-		return false;
+		return ((person != null) && (!this.isTerminated()) && (!person.isTerminated()) && person.isAdult());
 	}
 	
 	/**
@@ -136,11 +136,11 @@ public class BankAccount {
 	 * @param 	index
 	 * 			The index to check.
 	 * @return	False if this Bank Account cannot have the given Person as a grantee at any index.
-	 * 			Otherwise, false if the given index isn't positive, or if it exceeds the number of grantees with more than one.
+	 * 			Otherwise, false if the given index isn't positive, or if it exceeds the number of grantees.
 	 * 			Otherwise, true if and only if the given person isn't registered as a agrantee at any other index.
 	 * 			| if (!canHaveAsGrantee(person))
 	 * 			|	then result == false
-	 * 			| else if ( (index < 1) || (index > getNbGrantees() + 1) )
+	 * 			| else if ( (index < 1) || (index > getNbGrantees()) )
 	 * 			|	then result == false
 	 * 			| else
 	 * 			|	result == for each i in 1..getNbGrantees():
@@ -149,7 +149,16 @@ public class BankAccount {
 	@Raw
 	public boolean canHaveAsGranteeAt(Person person, int index)
 	{
-		return false;
+		if (!canHaveAsGrantee(person))
+			return false;
+		if ((index < 1) || (index > getIndexOfGrantee(person)))
+			return false;
+		for (int i = 0; i < getNbGrantees(); i++)
+		{
+			if ((i != index) && (getGranteeAt(i) == person))
+				return false;
+		}
+		return true;
 	}
 	
 	/**
@@ -162,7 +171,12 @@ public class BankAccount {
 	@Raw
 	public boolean hasProperGrantees()
 	{
-		return false;
+		for (int i = 0; i < getNbGrantees(); i++)
+		{
+			if (!canHaveAsGranteeAt(getGranteeAt(i), i))
+				return false;
+		}
+		return true;
 	}
 	
 	/**
@@ -176,7 +190,7 @@ public class BankAccount {
 	 */
 	public boolean hasAsGrantee(Person person)
 	{
-		return false;
+		return this.grantees.contains(person);
 	}
 	
 	/**
@@ -191,7 +205,7 @@ public class BankAccount {
 	 */
 	public List<Person> getAllGrantees()
 	{
-		return null;
+		return new ArrayList<Person>(this.grantees);
 	}
 	
 	/**
@@ -215,7 +229,18 @@ public class BankAccount {
 	 */
 	public void addGranteeAt(Person person, int index) throws IllegalArgumentException
 	{
-		
+		if (!canHaveAsGranteeAt(person, index))
+			throw new IllegalArgumentException("Invalid grantee.");
+		if (index < grantees.size())
+		{
+			Person oldGrantee = grantees.get(index);
+			if ((oldGrantee == null) || (grantees.indexOf(oldGrantee) < index))
+				grantees.set(index, person);
+			else
+				grantees.add(index, person);
+		}
+		else
+			addAsGrantee(person);
 	}
 	
 	/**
@@ -237,7 +262,12 @@ public class BankAccount {
 	 */
 	public void removeGranteeAt(int index) throws IndexOutOfBoundsException
 	{
-		
+		Person granteeToRemove = grantees.get(index);
+		for (int pos = index; pos < getNbGrantees(); pos++)
+		{
+			if (grantees.get(pos) == granteeToRemove)
+				grantees.set(pos, null);
+		}
 	}
 	
 	/**
@@ -255,7 +285,9 @@ public class BankAccount {
 	 */
 	public void addAsGrantee(Person person) throws IllegalArgumentException
 	{
-		
+		if (!canHaveAsGranteeAt(person, getNbGrantees()))
+			throw new IllegalArgumentException("Invalid person!");
+		grantees.add(person);
 	}
 	
 	/**
@@ -270,7 +302,7 @@ public class BankAccount {
 	 */
 	public void removeAsGrantee(Person person)
 	{
-		
+		grantees.remove(person);
 	}
 	
 	/**
@@ -327,7 +359,14 @@ public class BankAccount {
 	@Raw
 	public boolean hasProperSavingsAccounts()
 	{
-		return false;
+		for (SavingsAccount savings: this.savings)
+		{
+			if (!canHaveAsSavingsAccount(savings))
+				return false;
+			if (savings.getBankAccount() != this)
+				return false;
+		}
+		return true;
 	}
 	
 	/**
@@ -341,7 +380,7 @@ public class BankAccount {
 	 */
 	public int getNbSavingsAccounts()
 	{
-		return 0;
+		return this.savings.size();
 	}
 	
 	/**
@@ -355,7 +394,7 @@ public class BankAccount {
 	 */
 	public Set<SavingsAccount> getAllSavingsAccounts()
 	{
-		return null;
+		return new HashSet<SavingsAccount>(this.savings);
 	}
 	
 	/**
@@ -376,7 +415,12 @@ public class BankAccount {
 	 */
 	public void addAsSavingsAccount(SavingsAccount savings) throws IllegalArgumentException
 	{
-		
+		if (!canHaveAsSavingsAccount(savings))
+			throw new IllegalArgumentException();
+		if (savings.getBankAccount() != null)
+			throw new IllegalArgumentException();
+		this.savings.add(savings);
+		savings.setBankAccount(this);
 	}
 	
 	/**
@@ -393,7 +437,11 @@ public class BankAccount {
 	 */
 	public void removeAsSavingsAccount(SavingsAccount savings)
 	{
-		
+		if (hasAsSavingsAccount(savings))
+		{
+			this.savings.remove(savings);
+			savings.setBankAccount(null);
+		}
 	}
 	
 	/**

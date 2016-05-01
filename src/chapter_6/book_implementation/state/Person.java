@@ -26,6 +26,30 @@ public class Person {
 	}
 	
 	/**
+	 * Terminate this Person.
+	 * 
+	 * @post	This Person is terminated.
+	 * 			| new.isTerminated()
+	 */
+	public void terminate()
+	{
+		this.isTerminated = true;
+	}
+	
+	/**
+	 * Check whether this Person is terminated.
+	 */
+	public boolean isTerminated()
+	{
+		return this.isTerminated;
+	}
+	
+	/**
+	 * Variable referencing whether or not this Person is terminated.
+	 */
+	private boolean isTerminated = false;
+	
+	/**
 	 * Return the birth date of this Person.
 	 */
 	@Basic @Immutable
