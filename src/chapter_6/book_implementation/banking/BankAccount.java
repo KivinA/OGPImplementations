@@ -49,7 +49,15 @@ public class BankAccount {
 	 */
 	public void terminate()
 	{
-		
+		this.grantees.clear();
+		for (SavingsAccount saving: savings)
+		{
+			if( !saving.isTerminated())
+			{
+				removeAsSavingsAccount(saving);
+			}
+		}
+		this.isTerminated = true;
 	}
 	
 	/**
@@ -151,7 +159,7 @@ public class BankAccount {
 	{
 		if (!canHaveAsGrantee(person))
 			return false;
-		if ((index < 1) || (index > getIndexOfGrantee(person)))
+		if ((index < 1) || (index > getNbGrantees()))
 			return false;
 		for (int i = 0; i < getNbGrantees(); i++)
 		{
@@ -287,7 +295,10 @@ public class BankAccount {
 	{
 		if (!canHaveAsGranteeAt(person, getNbGrantees()))
 			throw new IllegalArgumentException("Invalid person!");
-		grantees.add(person);
+		if ((!grantees.isEmpty()) && (grantees.get(getNbGrantees() - 1) == null))
+			grantees.set(getNbGrantees() - 1, person);
+		else
+			grantees.add(person);
 	}
 	
 	/**
@@ -302,7 +313,12 @@ public class BankAccount {
 	 */
 	public void removeAsGrantee(Person person)
 	{
-		grantees.remove(person);
+		int firstIndexOfPerson = getIndexOfGrantee(person);
+		while (firstIndexOfPerson != -1)
+		{
+			grantees.set(firstIndexOfPerson, null);
+			firstIndexOfPerson = getIndexOfGrantee(person);
+		}
 	}
 	
 	/**
