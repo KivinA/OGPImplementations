@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassDiagram>
+    <Class name="chapter_6.book_implementation.banking.BankAccount"
+        x="435" y="413">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Association
+            destinationClassName="chapter_6.book_implementation.banking.SavingsAccount"
+            endpointName="savings" kind="Simple">
+            <Point x="189" y="504"/>
+        </Association>
+        <Association
+            destinationClassName="chapter_6.book_implementation.state.Person"
+            endpointName="grantees" kind="Simple">
+            <Point x="867" y="501"/>
+        </Association>
+        <Communication destinationClassName="chapter_6.book_implementation.banking.SavingsAccount"/>
+        <Communication destinationClassName="chapter_6.book_implementation.state.Person"/>
+    </Class>
+    <Class name="chapter_6.book_implementation.banking.SavingsAccount"
+        x="52" y="3">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Association
+            destinationClassName="chapter_6.book_implementation.banking.BankAccount"
+            endpointName="bankAccount" kind="Simple">
+            <Point x="579" y="55"/>
+        </Association>
+        <Communication destinationClassName="chapter_6.book_implementation.banking.BankAccount"/>
+    </Class>
+    <Class name="chapter_6.book_implementation.state.Person" x="796" y="94">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+    </Class>
+</ClassDiagram>
