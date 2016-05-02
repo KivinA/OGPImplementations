@@ -52,7 +52,7 @@ public class BankAccount {
 		this.grantees.clear();
 		for (SavingsAccount saving: savings)
 		{
-			if( !saving.isTerminated())
+			if (!saving.isTerminated())
 			{
 				removeAsSavingsAccount(saving);
 			}
